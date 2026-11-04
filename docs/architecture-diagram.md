@@ -2,7 +2,7 @@
 
 VS Code でこのファイルを開いて `Cmd + Shift + V` を押すと図になります（拡張 `bierner.markdown-mermaid`・アカウント不要）。
 
-緑 = ローカルで実装・確認済み / 黄 = 設定ファイルあり・未実行 / 灰の点線枠 = 外部サービス未接続
+緑 = 実行して確認済み / 黄 = 設定ファイルあり・未実行 / 灰の点線枠 = 外部サービス未接続
 
 ```mermaid
 ---
@@ -36,11 +36,13 @@ flowchart TB
     TST -->|守りを確認| APP
   end
 
-  subgraph G["`**② GitHub** ：未 push`"]
+  subgraph G["`**② GitHub** ：CI 成功`"]
     direction LR
     GF["GitFlow<br/>main / develop / feature"]
-    ACT["GitHub Actions<br/>CI ・ Betterleaks<br/>CodeQL ・ Test guard"]
+    ACT["GitHub Actions<br/>CI ・ Betterleaks"]
+    PRC["PR で動く検査<br/>CodeQL ・ Test guard ・ GitFlow"]
     GF --> ACT
+    GF --> PRC
   end
 
   subgraph P["`**③ 本番** ：未接続`"]
@@ -60,7 +62,7 @@ flowchart TB
     CRON --> GM
   end
 
-  L -. "push / PR（未 push）" .-> G
+  L -. "push 済み（PR はこれから）" .-> G
   G -. "CI 合格で自動デプロイ（未接続）" .-> P
 
   linkStyle default stroke:#6b7775,stroke-width:1.5px
@@ -69,7 +71,7 @@ flowchart TB
   style G fill:#fbfbf9,stroke:#d2b06a,color:#3a2a05
   style P fill:#fbfbf9,stroke:#a5a5a0,color:#33332f,stroke-dasharray:4 3
 
-  class VS,HK,GHK,APP,LDB,TST done
-  class GF,ACT ready
+  class VS,HK,GHK,APP,LDB,TST,ACT done
+  class GF,PRC ready
   class USR,BP,WEB,AUTH,INV,NEON,NT,CRON,GM todo
 ```

@@ -6,24 +6,24 @@
 
 凡例: ✅ 手元で実行して確認済み / 📄 ファイルはできている・本番では未確認 / 👤 本人のアカウント作業待ち
 
-| 場所                                                          | 状態  | 中身                                                                            | 残り                                        |
-| ------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------- | ------------------------------------------- |
-| VS Code + Claude Code（ハーネス Hooks）                       | ✅    | `.claude/hooks/guard.py`（11パターンで確認）                                    | なし                                        |
-| 秘密情報の分離                                                | ✅    | `.gitignore` `.env.example`（`.env` は手元だけ・chmod 600）                     | なし                                        |
-| アプリ本体                                                    | ✅    | `app/`（ローカル Postgres 17 で起動し、ブラウザで店主/スタッフ/スマホ幅を確認） | なし                                        |
-| テスト                                                        | ✅    | 44件 pass・壊し検査 10/10 RED                                                   | なし                                        |
-| Git hooks（GitFlow・Betterleaks）                             | ✅    | `.githooks/`（使い捨てリポジトリで違反させて全部停止を確認）                    | なし                                        |
-| Git のブランチ                                                | ✅    | `main` `develop` `feature/initial-setup`（ここにコミット済み）                  | **未 push**（⏸ 本人の OK 待ち）             |
-| GitHub Actions（CI・CodeQL・Test guard・GitFlow・Dependabot） | 📄    | `.github/`                                                                      | push 後に初回実行を確認。ブランチ保護は 👤  |
-| Render（CD・Web・Cron）                                       | 📄 👤 | `render.yaml` `backup/`                                                         | Blueprint 作成・環境変数の入力              |
-| Neon（本番DB・テストDB・権限）                                | 📄 👤 | `docs/neon/roles.sql`（ローカル Postgres では確認済み）                         | プロジェクト作成・ロール作成・test ブランチ |
-| Gmail（バックアップ受信）                                     | 📄 👤 | `backup/backup_db.py`（暗号化と復号はテスト済み）                               | アプリパスワード発行・実送信の確認          |
+| 場所                                                          | 状態  | 中身                                                                            | 残り                                                                 |
+| ------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| VS Code + Claude Code（ハーネス Hooks）                       | ✅    | `.claude/hooks/guard.py`（11パターンで確認）                                    | なし                                                                 |
+| 秘密情報の分離                                                | ✅    | `.gitignore` `.env.example`（`.env` は手元だけ・chmod 600）                     | なし                                                                 |
+| アプリ本体                                                    | ✅    | `app/`（ローカル Postgres 17 で起動し、ブラウザで店主/スタッフ/スマホ幅を確認） | なし                                                                 |
+| テスト                                                        | ✅    | 44件 pass・壊し検査 10/10 RED                                                   | なし                                                                 |
+| Git hooks（GitFlow・Betterleaks）                             | ✅    | `.githooks/`（使い捨てリポジトリで違反させて全部停止を確認）                    | なし                                                                 |
+| Git のブランチ                                                | ✅    | `feature/initial-setup` を push 済み（2026-11-04）                              | `develop` の初回 push（Claude のガードが止めるので本人）と PR        |
+| GitHub Actions（CI・CodeQL・Test guard・GitFlow・Dependabot） | ✅ 📄 | `.github/`。CI（lint・pytest）と Betterleaks 全履歴は GitHub 上で成功           | CodeQL・Test guard・GitFlow・壊し検査は PR で初回。ブランチ保護は 👤 |
+| Render（CD・Web・Cron）                                       | 📄 👤 | `render.yaml` `backup/`                                                         | Blueprint 作成・環境変数の入力                                       |
+| Neon（本番DB・テストDB・権限）                                | 📄 👤 | `docs/neon/roles.sql`（ローカル Postgres では確認済み）                         | プロジェクト作成・ロール作成・test ブランチ                          |
+| Gmail（バックアップ受信）                                     | 📄 👤 | `backup/backup_db.py`（暗号化と復号はテスト済み）                               | アプリパスワード発行・実送信の確認                                   |
 
 手順の続きは [SETUP.md](SETUP.md) の 3 から。
 
 ## 全体図
 
-緑 = ローカルで実装・確認済み / 黄 = 設定ファイルあり・未実行 / 灰の点線枠 = 外部サービス未接続。図だけを大きく見たいときは [architecture-diagram.md](architecture-diagram.md) を VS Code で開いて `Cmd + Shift + V`。
+緑 = 実行して確認済み / 黄 = 設定ファイルあり・未実行 / 灰の点線枠 = 外部サービス未接続。図だけを大きく見たいときは [architecture-diagram.md](architecture-diagram.md) を VS Code で開いて `Cmd + Shift + V`。
 
 ```mermaid
 ---
@@ -57,11 +57,13 @@ flowchart TB
     TST -->|守りを確認| APP
   end
 
-  subgraph G["`**② GitHub** ：未 push`"]
+  subgraph G["`**② GitHub** ：CI 成功`"]
     direction LR
     GF["GitFlow<br/>main / develop / feature"]
-    ACT["GitHub Actions<br/>CI ・ Betterleaks<br/>CodeQL ・ Test guard"]
+    ACT["GitHub Actions<br/>CI ・ Betterleaks"]
+    PRC["PR で動く検査<br/>CodeQL ・ Test guard ・ GitFlow"]
     GF --> ACT
+    GF --> PRC
   end
 
   subgraph P["`**③ 本番** ：未接続`"]
@@ -81,7 +83,7 @@ flowchart TB
     CRON --> GM
   end
 
-  L -. "push / PR（未 push）" .-> G
+  L -. "push 済み（PR はこれから）" .-> G
   G -. "CI 合格で自動デプロイ（未接続）" .-> P
 
   linkStyle default stroke:#6b7775,stroke-width:1.5px
@@ -90,8 +92,8 @@ flowchart TB
   style G fill:#fbfbf9,stroke:#d2b06a,color:#3a2a05
   style P fill:#fbfbf9,stroke:#a5a5a0,color:#33332f,stroke-dasharray:4 3
 
-  class VS,HK,GHK,APP,LDB,TST done
-  class GF,ACT ready
+  class VS,HK,GHK,APP,LDB,TST,ACT done
+  class GF,PRC ready
   class USR,BP,WEB,AUTH,INV,NEON,NT,CRON,GM todo
 ```
 

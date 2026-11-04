@@ -32,7 +32,9 @@ COOKIE_SECURE=0 .venv/bin/flask --app app run --port 5070
 TEST_DATABASE_URL=postgresql://localhost/cafe_test .venv/bin/pytest    # テスト（使い捨てスキーマで動く）
 ```
 
-## 3. GitHub へ push ⏸
+## 3. GitHub へ push（feature は ✅ 済み・develop と PR が 👤）
+
+`develop` への push は Claude のガード（`.claude/hooks/guard.py`）が止めるので、初回作成だけ本人がターミナルで打つ。
 
 ```bash
 git push -u origin develop                 # 初回作成だけ pre-push が許可する

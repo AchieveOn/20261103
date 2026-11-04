@@ -58,3 +58,10 @@
 - 保存のたびに大きな整形差分が混ざらないよう、既存ファイルを一度だけ整形（Python 11 / その他 11 ファイル。見た目だけで中身は不変）
   - 確認（実行して確認済み）: ruff check・ruff format --check・prettier --check すべて OK、pytest 44 passed、mutation_check 10/10 RED、betterleaks dir で漏れなし
   - 未確認: VS Code 上で保存時に実際に整形が走るか
+
+## 2026-11-04 初回 push
+
+- push 前検品: ファイルと push 対象コミットに実名・メアド・ローカルパスなし、Betterleaks 全履歴で漏れなし。作者は全コミット AchieveOn（noreply）。※ GitHub の Web で作られた `Initial commit` だけ個人メアドの作者で、push 前から公開済み
+- `feature/initial-setup` を push（pre-push のテスト 44 passed をローカル Postgres で実行）
+- GitHub Actions の CI 初回: lint・pytest（postgres:17 service）・Betterleaks 全履歴が success（実行して確認済み）。壊し検査・CodeQL・Test guard・GitFlow は PR 時だけ動くので未実行
+- 残り: `develop` の初回 push（Claude のガードで止まるので本人）→ PR 作成
