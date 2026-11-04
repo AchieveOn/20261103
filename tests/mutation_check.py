@@ -11,26 +11,41 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 MUTATIONS = [
-    ("app/auth.py", "return check_host() or require_login() or check_csrf()",
-     "return check_host() or require_login()", "CSRF チェックを外す"),
-    ("app/auth.py", "if request.host.rsplit(\":\", 1)[0] not in current_app.config[\"ALLOWED_HOSTS\"]:",
-     "if False:", "Host チェックを外す"),
-    ("app/auth.py", "user[\"session_gen\"] != session.get(\"gen\")", "False", "ログアウト後の古い Cookie を通す"),
-    ("app/auth.py", "if fail and fail[\"locked_until\"] and fail[\"locked_until\"] > utcnow():",
-     "if False:", "ログインロックを外す"),
-    ("app/inventory.py", "@bp.post(\"/moves/<int:move_id>/void\")\n@owner_required",
-     "@bp.post(\"/moves/<int:move_id>/void\")", "取消を staff にも許す"),
+    (
+        "app/auth.py",
+        "return check_host() or require_login() or check_csrf()",
+        "return check_host() or require_login()",
+        "CSRF チェックを外す",
+    ),
+    (
+        "app/auth.py",
+        'if request.host.rsplit(":", 1)[0] not in current_app.config["ALLOWED_HOSTS"]:',
+        "if False:",
+        "Host チェックを外す",
+    ),
+    ("app/auth.py", 'user["session_gen"] != session.get("gen")', "False", "ログアウト後の古い Cookie を通す"),
+    ("app/auth.py", 'if fail and fail["locked_until"] and fail["locked_until"] > utcnow():', "if False:", "ログインロックを外す"),
+    (
+        "app/inventory.py",
+        '@bp.post("/moves/<int:move_id>/void")\n@owner_required',
+        '@bp.post("/moves/<int:move_id>/void")',
+        "取消を staff にも許す",
+    ),
     ("app/inventory.py", "return crypto.encrypt(v, _key()) if v else None", "return v or None", "暗号化せずに保存"),
-    ("app/inventory.py", "if g.user[\"role\"] == \"owner\" else None", "", "staff に原価・仕入先を見せる"),
+    ("app/inventory.py", 'if g.user["role"] == "owner" else None', "", "staff に原価・仕入先を見せる"),
     ("app/inventory.py", "if qty > stock:", "if False:", "在庫より多く使えてしまう"),
     ("app/inventory.py", "WHERE m.voided_at IS NULL), 0)", "), 0)", "取消済みも在庫に数える"),
-    ("app/__init__.py", "resp.headers[\"Cache-Control\"] = \"no-store\"", "pass", "キャッシュ禁止を外す"),
+    ("app/__init__.py", 'resp.headers["Cache-Control"] = "no-store"', "pass", "キャッシュ禁止を外す"),
 ]
 
 
 def run_tests() -> bool:
-    return subprocess.run([sys.executable, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider"],
-                          cwd=ROOT, capture_output=True).returncode == 0
+    return (
+        subprocess.run(
+            [sys.executable, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider"], cwd=ROOT, capture_output=True
+        ).returncode
+        == 0
+    )
 
 
 def main() -> int:

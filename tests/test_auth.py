@@ -29,7 +29,7 @@ def test_wrong_password_same_message_as_unknown_id(client):
 def test_lockout_after_5_failures(client):
     for _ in range(5):
         login(client, "staff", "wrong-password-xx")
-    res = login(client, "staff")   # 正しいパスワードでもロック中は入れない
+    res = login(client, "staff")  # 正しいパスワードでもロック中は入れない
     assert res.status_code == 429
 
 
@@ -62,6 +62,7 @@ def test_bad_host_rejected(client):
 def test_disabled_user_cannot_login(app, client):
     with app.app_context():
         from app.db import query
+
         query("UPDATE users SET active = FALSE WHERE login_id = 'staff'")
     assert login(client, "staff").status_code == 401
 
@@ -78,13 +79,16 @@ def test_staff_forbidden(app):
     assert post(staff, f"/items/{item_id}/archive").status_code == 403
 
 
-@pytest.mark.parametrize("url,expected", [
-    ("/items/1", "/items/1"),
-    ("//evil.example", "/"),
-    ("https://evil.example", "/"),
-    ("/\\evil.example", "/"),
-    (None, "/"),
-])
+@pytest.mark.parametrize(
+    "url,expected",
+    [
+        ("/items/1", "/items/1"),
+        ("//evil.example", "/"),
+        ("https://evil.example", "/"),
+        ("/\\evil.example", "/"),
+        (None, "/"),
+    ],
+)
 def test_safe_next(url, expected):
     assert safe_next(url) == expected
 

@@ -3,7 +3,8 @@ name: CI
 
 on:
   push:
-    branches: [main, develop, "feature/**", "bugfix/**", "release/**", "hotfix/**"]
+    branches:
+      [main, develop, "feature/**", "bugfix/**", "release/**", "hotfix/**"]
   pull_request:
     branches: [main, develop]
 
@@ -17,7 +18,7 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_PASSWORD: postgres  # betterleaks:allow（CI 内だけの使い捨て DB）
+          POSTGRES_PASSWORD: postgres # betterleaks:allow（CI 内だけの使い捨て DB）
           POSTGRES_DB: cafe_test
         ports: ["5432:5432"]
         options: >-

@@ -13,12 +13,12 @@
 
 ## ドキュメント
 
-| 読むもの | 内容 |
-|---|---|
-| [docs/SETUP.md](docs/SETUP.md) | 構築手順（済み / 本人作業の区別つき） |
+| 読むもの                                     | 内容                                       |
+| -------------------------------------------- | ------------------------------------------ |
+| [docs/SETUP.md](docs/SETUP.md)               | 構築手順（済み / 本人作業の区別つき）      |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 構成図・各層の役割・セキュリティ対策の一覧 |
-| [docs/GITFLOW.md](docs/GITFLOW.md) | ブランチ運用と hooks |
-| [LOG.md](LOG.md) | 作業記録 |
+| [docs/GITFLOW.md](docs/GITFLOW.md)           | ブランチ運用と hooks                       |
+| [LOG.md](LOG.md)                             | 作業記録                                   |
 
 ## すぐ始める
 

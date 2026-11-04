@@ -88,6 +88,7 @@ def owner_required(view):
         if g.user is None or g.user["role"] != "owner":
             abort(403)
         return view(*args, **kwargs)
+
     return wrapped
 
 
@@ -125,7 +126,7 @@ def login():
         return render_template("login.html", login_id=login_id, error=LOGIN_ERROR), 401
 
     query("DELETE FROM login_failures WHERE login_id = %s", (login_id,))
-    session.clear()   # セッション固定攻撃対策
+    session.clear()  # セッション固定攻撃対策
     session["uid"] = user["id"]
     session["gen"] = user["session_gen"]
     session.permanent = True

@@ -34,7 +34,7 @@ def _key() -> str:
 def with_status(row: dict) -> dict:
     window = current_app.config["AVG_WINDOW_DAYS"]
     age_days = (utcnow() - row["created_at"]).total_seconds() / 86400
-    span = max(1.0, min(window, age_days))   # 登録して日が浅い品目は経過日数で割る
+    span = max(1.0, min(window, age_days))  # 登録して日が浅い品目は経過日数で割る
     per_day = row["used_recent"] / span
     days_left = row["stock"] / per_day if per_day > 0 else None
 
@@ -46,9 +46,13 @@ def with_status(row: dict) -> dict:
         level = "soon"
     else:
         level = "ok"
-    return {**row, "per_day": round(per_day, 1),
-            "days_left": None if days_left is None else round(days_left, 1),
-            "level": level, "level_label": LEVEL_LABEL[level]}
+    return {
+        **row,
+        "per_day": round(per_day, 1),
+        "days_left": None if days_left is None else round(days_left, 1),
+        "level": level,
+        "level_label": LEVEL_LABEL[level],
+    }
 
 
 def load_items(item_id: int | None = None) -> list[dict]:
@@ -71,8 +75,10 @@ def load_item(item_id: int) -> dict:
 
 def secret_fields(item: dict) -> dict:
     """店主だけが見る暗号化列を復号する。"""
+
     def dec(v):
         return crypto.decrypt(v, _key()) if v else ""
+
     return {"supplier": dec(item["supplier_enc"]), "unit_cost": dec(item["unit_cost_enc"]), "note": dec(item["note_enc"])}
 
 
@@ -181,9 +187,13 @@ def parse_item_form(form) -> dict:
     def enc(v):
         v = v.strip()
         return crypto.encrypt(v, _key()) if v else None
+
     return {
-        "name": name, "category": form["category"], "unit": form["unit"],
-        "threshold": threshold, "lead_days": lead_days,
+        "name": name,
+        "category": form["category"],
+        "unit": form["unit"],
+        "threshold": threshold,
+        "lead_days": lead_days,
         "supplier_enc": enc(form.get("supplier", "")[:80]),
         "unit_cost_enc": enc(unit_cost),
         "note_enc": enc(form.get("note", "")[:500]),
@@ -203,7 +213,8 @@ def item_new():
             """INSERT INTO items (name, category, unit, threshold, lead_days, supplier_enc, unit_cost_enc, note_enc)
                VALUES (%(name)s, %(category)s, %(unit)s, %(threshold)s, %(lead_days)s,
                        %(supplier_enc)s, %(unit_cost_enc)s, %(note_enc)s) RETURNING id""",
-            f, one=True,
+            f,
+            one=True,
         )
         flash("品目を登録しました", "ok")
         return redirect(url_for(".item_detail", item_id=row["id"]))

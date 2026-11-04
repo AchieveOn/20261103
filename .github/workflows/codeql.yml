@@ -7,7 +7,7 @@ on:
   pull_request:
     branches: [main, develop]
   schedule:
-    - cron: "0 0 * * 1"   # 毎週月曜 9:00 JST にも全体を再解析
+    - cron: "0 0 * * 1" # 毎週月曜 9:00 JST にも全体を再解析
 
 permissions:
   contents: read

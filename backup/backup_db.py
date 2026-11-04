@@ -21,7 +21,7 @@ from zoneinfo import ZoneInfo
 
 from cryptography.fernet import Fernet
 
-MAX_ATTACH = 20 * 1024 * 1024   # Gmail の添付上限 25MB（エンコード後）に余裕を持たせる
+MAX_ATTACH = 20 * 1024 * 1024  # Gmail の添付上限 25MB（エンコード後）に余裕を持たせる
 JST = ZoneInfo("Asia/Tokyo")
 
 
@@ -34,8 +34,9 @@ def env(name: str) -> str:
 
 def dump(url: str, pg_dump: str = "pg_dump") -> bytes:
     """custom 形式（圧縮済み・pg_restore で戻せる）。所有者・権限は含めない。"""
-    res = subprocess.run([pg_dump, "--format=custom", "--no-owner", "--no-privileges", "--dbname", url],
-                         capture_output=True, check=False)
+    res = subprocess.run(
+        [pg_dump, "--format=custom", "--no-owner", "--no-privileges", "--dbname", url], capture_output=True, check=False
+    )
     if res.returncode != 0:
         # URL（パスワード入り）を出さないよう、stderr だけを返す
         raise RuntimeError("pg_dump failed: " + res.stderr.decode(errors="replace").strip())
@@ -72,8 +73,7 @@ def send(msg: EmailMessage, user: str, app_password: str) -> None:
 def run_backup(out_dir: str | None) -> int:
     stamp = datetime.now(JST).strftime("%Y%m%d_%H%M")
     filename = f"cafe_{stamp}.dump.enc"
-    payload = encrypt(dump(env("BACKUP_DATABASE_URL"), os.environ.get("PG_DUMP", "pg_dump")),
-                      env("BACKUP_ENCRYPTION_KEY"))
+    payload = encrypt(dump(env("BACKUP_DATABASE_URL"), os.environ.get("PG_DUMP", "pg_dump")), env("BACKUP_ENCRYPTION_KEY"))
 
     if out_dir:
         path = Path(out_dir) / filename

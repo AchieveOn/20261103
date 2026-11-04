@@ -23,7 +23,7 @@ def test_healthz_db_unreachable():
 
 
 def test_healthz_ok(client):
-    res = client.get("/healthz", headers={"Host": "anything.internal"})   # Host チェック対象外
+    res = client.get("/healthz", headers={"Host": "anything.internal"})  # Host チェック対象外
     assert res.status_code == 200
     assert res.get_json()["db"] == "ok"
 

@@ -86,8 +86,7 @@ def post(client, path, data=None):
 
 
 def add_item(client, **kw):
-    data = {"name": "ブラジル サントス", "category": "コーヒー豆", "unit": "g",
-            "threshold": "500", "lead_days": "3", **kw}
+    data = {"name": "ブラジル サントス", "category": "コーヒー豆", "unit": "g", "threshold": "500", "lead_days": "3", **kw}
     res = post(client, "/items/new", data)
     assert res.status_code == 302, res.get_data(as_text=True)
     return int(res.headers["Location"].rsplit("/", 1)[1])

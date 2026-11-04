@@ -53,7 +53,7 @@ def test_send_is_not_called_with_out_dir(tmp_path, monkeypatch):
 
 def test_dump_error_hides_url():
     with pytest.raises(RuntimeError) as e:
-        backup_db.dump("postgresql://user:SECRETPW@127.0.0.1:1/x", PG_DUMP)   # betterleaks:allow
+        backup_db.dump("postgresql://user:SECRETPW@127.0.0.1:1/x", PG_DUMP)  # betterleaks:allow
     assert "SECRETPW" not in str(e.value)
 
 
@@ -68,6 +68,7 @@ def test_real_dump_restorable(app):
         pytest.skip(f"pg_dump {client_major} はサーバー {server_major} より古い")
     raw = backup_db.dump(TEST_URL, PG_DUMP)
     assert raw.startswith(b"PGDMP")
-    listing = subprocess.run([str(Path(PG_DUMP).with_name("pg_restore")), "--list"],
-                             input=raw, capture_output=True, check=True).stdout.decode()
+    listing = subprocess.run(
+        [str(Path(PG_DUMP).with_name("pg_restore")), "--list"], input=raw, capture_output=True, check=True
+    ).stdout.decode()
     assert "TABLE" in listing and "items" in listing

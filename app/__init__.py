@@ -11,8 +11,10 @@ from .config import Config
 JST = ZoneInfo("Asia/Tokyo")
 
 # 外部の CDN・インラインスクリプトを一切使わない前提の CSP
-CSP = ("default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
-       "form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'")
+CSP = (
+    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
+    "form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'"
+)
 
 
 def create_app(config: type[Config] | None = None) -> Flask:
@@ -36,7 +38,7 @@ def create_app(config: type[Config] | None = None) -> Flask:
         resp.headers["X-Content-Type-Options"] = "nosniff"
         resp.headers["Referrer-Policy"] = "same-origin"
         resp.headers["X-Frame-Options"] = "DENY"
-        resp.headers["Cache-Control"] = "no-store"   # 在庫・原価をブラウザや共有端末に残さない
+        resp.headers["Cache-Control"] = "no-store"  # 在庫・原価をブラウザや共有端末に残さない
         if app.config["SESSION_COOKIE_SECURE"]:
             resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return resp

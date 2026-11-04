@@ -25,18 +25,18 @@ class Config:
 
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
-    SESSION_COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "1") == "1"   # ローカルの http では 0
+    SESSION_COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "1") == "1"  # ローカルの http では 0
     PERMANENT_SESSION_LIFETIME = timedelta(hours=12)
 
     MAX_LOGIN_FAILURES = 5
     LOCK_MINUTES = 15
-    AVG_WINDOW_DAYS = 14   # 1日あたりの使用量は直近14日の平均
+    AVG_WINDOW_DAYS = 14  # 1日あたりの使用量は直近14日の平均
 
 
 class TestConfig(Config):
     TESTING = True
     SECRET_KEY = "test-secret"  # noqa: S105  betterleaks:allow（テスト専用のダミー値）
     DATABASE_URL = os.environ.get("TEST_DATABASE_URL", "")
-    APP_ENCRYPTION_KEY = ""   # conftest で毎回生成する
+    APP_ENCRYPTION_KEY = ""  # conftest で毎回生成する
     ALLOWED_HOSTS = {"localhost"}
     SESSION_COOKIE_SECURE = False

@@ -6,6 +6,7 @@ from .conftest import add_item, login, post
 def stock_of(app, item_id):
     with app.app_context():
         from app.inventory import load_item
+
         return load_item(item_id)["stock"]
 
 
@@ -18,7 +19,7 @@ def test_stock_is_sum_of_moves(app, owner):
     record(owner, item, "in", 1000)
     record(owner, item, "out", 300)
     assert stock_of(app, item) == 700
-    record(owner, item, "count", 650)   # 棚卸しで実在庫に合わせる
+    record(owner, item, "count", 650)  # 棚卸しで実在庫に合わせる
     assert stock_of(app, item) == 650
 
 
@@ -59,7 +60,7 @@ def test_void_keeps_history(app, owner):
     post(owner, f"/moves/{out_id}/void")
     assert stock_of(app, item) == 100
     with app.app_context():
-        assert query("SELECT count(*) AS n FROM moves", one=True)["n"] == 2   # 消さずに残す
+        assert query("SELECT count(*) AS n FROM moves", one=True)["n"] == 2  # 消さずに残す
 
 
 def test_void_blocked_if_stock_goes_negative(app, owner):
@@ -90,7 +91,7 @@ def test_secret_fields_encrypted_at_rest(app, owner):
         row = query("SELECT supplier_enc, unit_cost_enc, note_enc FROM items WHERE id = %s", (item,), one=True)
     raw = " ".join(row.values())
     assert "丸山珈琲商会" not in raw and "1850" not in raw and "月末締め" not in raw
-    assert all(v.startswith("gAAAA") for v in row.values())   # Fernet トークン
+    assert all(v.startswith("gAAAA") for v in row.values())  # Fernet トークン
 
 
 def test_owner_sees_secret_staff_does_not(app):
@@ -107,8 +108,11 @@ def test_owner_sees_secret_staff_does_not(app):
 
 def test_edit_and_archive(app, owner):
     item = add_item(owner)
-    res = post(owner, f"/items/{item}/edit", {"name": "ブラジル No.2", "category": "コーヒー豆",
-                                              "unit": "g", "threshold": "800", "lead_days": "5"})
+    res = post(
+        owner,
+        f"/items/{item}/edit",
+        {"name": "ブラジル No.2", "category": "コーヒー豆", "unit": "g", "threshold": "800", "lead_days": "5"},
+    )
     assert res.status_code == 302
     assert "ブラジル No.2" in owner.get("/").get_data(as_text=True)
     post(owner, f"/items/{item}/archive")
@@ -130,8 +134,9 @@ def test_levels(app, owner):
     record(owner, ok, "in", 1000)
     with app.app_context():
         from app.inventory import load_items
+
         levels = {i["name"]: i["level"] for i in load_items()}
     assert levels == {"A": "empty", "B": "reorder", "C": "ok"}
     html = owner.get("/").get_data(as_text=True)
-    assert html.index(">A<") < html.index(">B<") < html.index(">C<")   # 危ない順に並ぶ
+    assert html.index(">A<") < html.index(">B<") < html.index(">C<")  # 危ない順に並ぶ
     assert empty

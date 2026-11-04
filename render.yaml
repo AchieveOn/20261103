@@ -5,21 +5,21 @@ services:
   - type: web
     name: cafe-stock
     runtime: python
-    region: singapore            # Neon の ap-southeast-1（シンガポール）に近い所
-    plan: starter                # free は15分無操作でスリープ＆初回表示が遅い。費用を抑えるなら free に変更
-    branch: main                 # GitFlow: main = 本番
-    autoDeployTrigger: checksPass   # CD: main への push で GitHub の CI が通ったときだけ自動デプロイ
+    region: singapore # Neon の ap-southeast-1（シンガポール）に近い所
+    plan: starter # free は15分無操作でスリープ＆初回表示が遅い。費用を抑えるなら free に変更
+    branch: main # GitFlow: main = 本番
+    autoDeployTrigger: checksPass # CD: main への push で GitHub の CI が通ったときだけ自動デプロイ
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn "app:create_app()" --workers 2 --bind 0.0.0.0:$PORT --access-logfile -
     healthCheckPath: /healthz
     envVars:
       - key: SECRET_KEY
-        generateValue: true      # Render が乱数で生成
-      - key: DATABASE_URL        # Neon の app_rw ロールの接続文字列（pooler 可・sslmode=require）
+        generateValue: true # Render が乱数で生成
+      - key: DATABASE_URL # Neon の app_rw ロールの接続文字列（pooler 可・sslmode=require）
         sync: false
-      - key: APP_ENCRYPTION_KEY  # app.crypto.generate_key() で生成した鍵
+      - key: APP_ENCRYPTION_KEY # app.crypto.generate_key() で生成した鍵
         sync: false
-      - key: ALLOWED_HOSTS       # 実際の URL に合わせて直す（独自ドメインを足すならカンマ区切り）
+      - key: ALLOWED_HOSTS # 実際の URL に合わせて直す（独自ドメインを足すならカンマ区切り）
         value: cafe-stock.onrender.com
       - key: COOKIE_SECURE
         value: "1"
@@ -32,17 +32,17 @@ services:
     plan: starter
     branch: main
     autoDeployTrigger: checksPass
-    schedule: "0 18 * * *"       # UTC 18:00 = JST 3:00
+    schedule: "0 18 * * *" # UTC 18:00 = JST 3:00
     dockerfilePath: ./backup/Dockerfile
     dockerContext: ./backup
     envVars:
-      - key: BACKUP_DATABASE_URL     # Neon の backup_ro ロール（読み取り専用）の接続文字列
+      - key: BACKUP_DATABASE_URL # Neon の backup_ro ロール（読み取り専用）の接続文字列
         sync: false
-      - key: BACKUP_ENCRYPTION_KEY   # APP_ENCRYPTION_KEY とは別の鍵
+      - key: BACKUP_ENCRYPTION_KEY # APP_ENCRYPTION_KEY とは別の鍵
         sync: false
       - key: GMAIL_USER
         sync: false
-      - key: GMAIL_APP_PASSWORD      # Google アカウントの「アプリパスワード」
+      - key: GMAIL_APP_PASSWORD # Google アカウントの「アプリパスワード」
         sync: false
       - key: BACKUP_MAIL_TO
         sync: false
