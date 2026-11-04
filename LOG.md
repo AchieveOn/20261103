@@ -65,3 +65,12 @@
 - `feature/initial-setup` を push（pre-push のテスト 44 passed をローカル Postgres で実行）
 - GitHub Actions の CI 初回: lint・pytest（postgres:17 service）・Betterleaks 全履歴が success（実行して確認済み）。壊し検査・CodeQL・Test guard・GitFlow は PR 時だけ動くので未実行
 - 残り: `develop` の初回 push（Claude のガードで止まるので本人）→ PR 作成
+
+## 2026-11-04 PR #1（feature/initial-setup → develop）
+- PR 作成。PR 時だけ動く検査の初回: CI（lint・pytest 44 passed・0 skipped・壊し検査）・CodeQL・GitFlow・Betterleaks は success（実行して確認済み）
+- Test guard は failure: 「skip/xfail が 0 → 4」。develop にテストが1本もない状態からの初回 PR なので、条件つき skip（DB・pg_dump が無い環境だけ飛ばす4か所）が「増えた」と数えられた。CI では 0 skipped
+  - 設計どおりの停止。ラベル `test-change-approved` は人が付ける承認なので Claude は付けない（ラベル自体もリポジトリに未作成）
+- 本人が `test-change-approved` ラベルを作成・付与 → Test guard 再実行で success。PR #1 の検査は全部 success
+- 見つけた穴: Test guard が壊し検査を 10 件ではなく 7 件と数えていた。原因は一括整形で3件が複数行に折り返され、行の形（`^\s*("app/`）で数えていたため。消されても気づけない状態だった
+  - 修正: `MUTATIONS` リストの要素数を ast で数える（ファイルが無い・読めないときは 0 ＝止める側）
+  - 確認（実行して確認済み・使い捨てクローン）: develop 比較で 0 → 10。折り返された1件を消すと新方式は 10 → 9 で停止、旧方式は 7 → 7 で素通り。承認ラベルありなら警告だけで通過
