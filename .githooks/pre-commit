@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# コミット前チェック: ①GitFlowのブランチ規則 ②秘密情報ファイルの混入 ③Betterleaksでキー検出
+set -euo pipefail
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$HOOK_DIR/_gitflow.sh"
+
+branch="$(git symbolic-ref --short HEAD 2>/dev/null || echo "")"
+
+# ① GitFlow: main/develop へ直接コミットしない・作業ブランチ名を規則どおりに
+if [[ -z "$branch" ]]; then
+  yellow "[gitflow] detached HEAD です（rebase 中なら問題なし）"
+elif is_protected_branch "$branch"; then
+  red "[gitflow] '$branch' に直接コミットはできません。作業ブランチを切ってください:"
+  red "  git switch -c feature/<名前>   （hotfix は main から hotfix/X.Y.Z）"
+  exit 1
+elif ! is_valid_work_branch "$branch"; then
+  red "[gitflow] ブランチ名 '$branch' は GitFlow の規則外です。"
+  branch_name_help
+  exit 1
+fi
+
+# ② 秘密情報ファイルを強制 add していないか（.gitignore をすり抜けた場合の保険）
+secret_files="$(git diff --cached --name-only --diff-filter=ACMR \
+  | grep -E '(^|/)\.env($|\.)|\.(pem|key|p12|dump|enc)$|(^|/)secrets/|(^|/)backups/' \
+  | grep -vE '(^|/)\.env\.example$' || true)"
+if [[ -n "$secret_files" ]]; then
+  red "[secrets] 秘密情報らしいファイルがステージされています:"
+  printf '  %s\n' $secret_files >&2
+  red "  git restore --staged <file> で外してください（.env は .env.example に雛形だけ書く）"
+  exit 1
+fi
+
+# ③ Betterleaks でステージ内容のキー・トークンを検出
+if command -v betterleaks >/dev/null 2>&1; then
+  if ! betterleaks git --pre-commit --staged --redact --no-banner -l warn .; then
+    red "[secrets] Betterleaks がキー情報を検出しました。値を .env に移してからコミットしてください。"
+    red "  誤検知なら該当行に  # betterleaks:allow  を付ける"
+    exit 1
+  fi
+else
+  red "[secrets] betterleaks が見つかりません:  brew install betterleaks"
+  exit 1
+fi
+
+green "[pre-commit] OK ($branch)"

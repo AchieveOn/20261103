@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# ブランチ切り替え・作成時に、GitFlow 規則外の名前ならその場で警告する（ブロックはしない）
+# 引数: <前のHEAD> <新しいHEAD> <1=ブランチ切替 / 0=ファイルcheckout>
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$HOOK_DIR/_gitflow.sh"
+
+[[ "${3:-0}" == "1" ]] || exit 0
+branch="$(git symbolic-ref --short HEAD 2>/dev/null || exit 0)"
+if ! is_protected_branch "$branch" && ! is_valid_work_branch "$branch"; then
+  yellow "[gitflow] '$branch' は GitFlow の規則外の名前です（このままだとコミットで止まります）"
+  branch_name_help
+fi
+exit 0

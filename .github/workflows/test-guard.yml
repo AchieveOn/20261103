@@ -1,0 +1,25 @@
+# テストの変更を感知: PR でテストの削除・テスト関数の減少・skip 追加があれば止める
+# （AI や人が「テストを弱めて緑にする」のを防ぐ）。意図した変更なら PR に
+# ラベル test-change-approved を付けると通る。
+name: Test guard
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compare tests with base branch
+        env:
+          BASE: origin/${{ github.base_ref }}
+          APPROVED: ${{ contains(github.event.pull_request.labels.*.name, 'test-change-approved') }}
+        run: python .github/scripts/test_guard.py

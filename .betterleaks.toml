@@ -1,0 +1,17 @@
+# Betterleaks の設定（既定ルール + 誤検知の除外だけ）。除外は狭く・理由つきで足す。
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "テストの login(client, \"owner\") の第2引数はユーザー ID でパスワードではない"
+targetRules = ["generic-password"]
+condition = "AND"   # tests/ の中で、かつ login(...) の行だけ
+regexTarget = "line"
+paths = ['''^tests/''']
+regexes = ['''login\((client|owner|staff|c1|c2|s|m|pg), "(owner|staff)"''']
+
+[[allowlists]]
+description = "雛形のプレースホルダと CI 内だけの使い捨て Postgres"
+targetRules = ["generic-credential-uri"]
+regexTarget = "line"
+regexes = ['''app_rw:PASSWORD@ep-xxxx''', '''postgres:postgres@localhost:5432/cafe_test''']

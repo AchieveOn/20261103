@@ -1,0 +1,31 @@
+# GitFlow の合流方向を PR で強制する（ローカルの Git hooks をすり抜けても止める）
+#   main    ← release/X.Y.Z, hotfix/X.Y.Z
+#   develop ← feature/*, bugfix/*, release/*, hotfix/*, main
+name: GitFlow
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  branch-rule:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check source → target
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          echo "$HEAD_REF → $BASE_REF"
+          case "$BASE_REF" in
+            main)
+              [[ "$HEAD_REF" =~ ^(release|hotfix)/[0-9]+\.[0-9]+\.[0-9]+$ ]] && exit 0
+              echo "::error::main には release/X.Y.Z か hotfix/X.Y.Z からしかマージできません"; exit 1 ;;
+            develop)
+              [[ "$HEAD_REF" =~ ^(feature|bugfix)/[a-z0-9][a-z0-9._-]*$|^(release|hotfix)/[0-9]+\.[0-9]+\.[0-9]+$|^main$ ]] && exit 0
+              echo "::error::develop には feature/ bugfix/ release/ hotfix/ main からしかマージできません"; exit 1 ;;
+          esac
