@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}在庫{% endblock %}｜喫茶在庫</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  {% if g.user %}
+  <header class="bar">
+    <a class="brand" href="{{ url_for('inventory.index') }}">喫茶在庫</a>
+    <nav>
+      {% if g.user.role == 'owner' %}<a href="{{ url_for('inventory.item_new') }}">品目を追加</a>{% endif %}
+      <span class="who">{{ g.user.login_id }}（{{ '店主' if g.user.role == 'owner' else 'スタッフ' }}）</span>
+      <form method="post" action="{{ url_for('auth.logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="link">ログアウト</button>
+      </form>
+    </nav>
+  </header>
+  {% endif %}
+  <main>
+    {% for cat, msg in get_flashed_messages(with_categories=true) %}
+      <p class="flash {{ cat }}" role="status">{{ msg }}</p>
+    {% endfor %}
+    {% block main %}{% endblock %}
+  </main>
+</body>
+</html>

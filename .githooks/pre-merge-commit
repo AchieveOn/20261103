@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# ローカルでの --no-ff マージ時: GitFlow の合流方向を守る
+#   main    ← release/* hotfix/* だけ
+#   develop ← feature/* bugfix/* release/* hotfix/* main（hotfix 取り込み）
+# この時点では MERGE_HEAD がまだ無いので、git が渡す GIT_REFLOG_ACTION（"merge <ブランチ>"）から合流元を読む
+set -euo pipefail
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$HOOK_DIR/_gitflow.sh"
+
+target="$(git symbolic-ref --short HEAD 2>/dev/null || echo "")"
+source_branch=""
+for arg in ${GIT_REFLOG_ACTION:-}; do
+  [[ "$arg" == merge || "$arg" == -* ]] && continue
+  source_branch="$arg"   # 最後のブランチ名を使う（pull のときは "pull" なので対象外）
+done
+[[ "${GIT_REFLOG_ACTION:-}" == merge* && -n "$source_branch" ]] || exit 0
+# origin/feature/x のようなリモート追跡ブランチは remote 名を外す
+for remote in $(git remote); do
+  source_branch="${source_branch#"$remote"/}"
+done
+
+case "$target" in
+  main|master)
+    [[ "$source_branch" =~ ^(release|hotfix)/ ]] || {
+      red "[gitflow] main には release/* か hotfix/* しかマージできません（今: $source_branch）"; exit 1; }
+    ;;
+  develop)
+    [[ "$source_branch" =~ ^(feature|bugfix|release|hotfix)/|^main$ ]] || {
+      red "[gitflow] develop には feature/ bugfix/ release/ hotfix/ main しかマージできません（今: $source_branch）"; exit 1; }
+    ;;
+esac
+exit 0

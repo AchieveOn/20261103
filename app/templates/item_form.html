@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ '品目の編集' if item else '品目を追加' }}{% endblock %}
+{% block main %}
+<p class="crumb"><a href="{{ url_for('inventory.index') }}">在庫</a>{% if item %} / <a href="{{ url_for('inventory.item_detail', item_id=item.id) }}">{{ item.name }}</a>{% endif %}</p>
+<h1>{{ '品目の編集' if item else '品目を追加' }}</h1>
+
+<form class="sheet-form" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <table class="sheet">
+    <tr><th><label for="name">品名</label></th><td><input id="name" name="name" maxlength="80" required value="{{ form.name or '' }}"></td></tr>
+    <tr><th><label for="category">区分</label></th><td>
+      <select id="category" name="category" required>
+        {% for c in categories %}<option {{ 'selected' if form.category == c }}>{{ c }}</option>{% endfor %}
+      </select></td></tr>
+    <tr><th><label for="unit">単位</label></th><td>
+      <select id="unit" name="unit" required>
+        {% for u in units %}<option {{ 'selected' if form.unit == u }}>{{ u }}</option>{% endfor %}
+      </select></td></tr>
+    <tr><th><label for="threshold">発注点</label></th><td><input id="threshold" name="threshold" type="number" min="0" value="{{ form.threshold if form.threshold is not none else 0 }}"></td></tr>
+    <tr><th><label for="lead_days">届くまでの日数</label></th><td><input id="lead_days" name="lead_days" type="number" min="0" value="{{ form.lead_days if form.lead_days is not none else 3 }}"></td></tr>
+    <tr class="owner"><th><label for="supplier">仕入先</label></th><td><input id="supplier" name="supplier" maxlength="80" value="{{ form.supplier or '' }}"></td></tr>
+    <tr class="owner"><th><label for="unit_cost">仕入単価（円）</label></th><td><input id="unit_cost" name="unit_cost" inputmode="decimal" value="{{ form.unit_cost or '' }}"></td></tr>
+    <tr class="owner"><th><label for="note">店主メモ</label></th><td><textarea id="note" name="note" maxlength="500" rows="3">{{ form.note or '' }}</textarea></td></tr>
+  </table>
+  <button class="primary">{{ '保存する' if item else '追加する' }}</button>
+</form>
+
+{% if item %}
+<form class="archive" method="post" action="{{ url_for('inventory.item_archive', item_id=item.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="link danger">取扱終了にする</button>
+</form>
+{% endif %}
+{% endblock %}
