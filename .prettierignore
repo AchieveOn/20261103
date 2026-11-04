@@ -1,0 +1,7 @@
+# Jinja テンプレートは Prettier が {% %} {{ }} を知らずに崩すので整形しない
+app/templates/
+# 自動生成・手元専用
+.venv/
+納品/
+.pytest_cache/
+.ruff_cache/
