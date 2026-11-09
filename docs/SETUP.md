@@ -52,24 +52,53 @@ gh pr create --base develop --fill         # CI・CodeQL・Test guard・GitFlow 
 3. ラベル `test-change-approved` を作成（テストを意図的に減らす PR のときだけ付ける）
 4. （任意）Settings → Secrets → Actions に `TEST_DATABASE_URL`（Neon test ブランチの**直結** URL）。無ければ CI は使い捨て Postgres で動く
 
-## 5. Neon 👤
+## 5. Neon（1〜4 ✅ 済み・test ブランチは任意）
 
-1. プロジェクト作成: リージョン **AWS Singapore (ap-southeast-1)**、Postgres **17**、DB 名 `appdb`
-2. テーブル作成（owner ロールの接続文字列で、手元から1回）:
-   ```bash
-   DATABASE_URL='<neondb_owner の接続文字列>' .venv/bin/flask --app app init-db
-   ```
-3. 権限: SQL Editor か psql で [docs/neon/roles.sql](neon/roles.sql) を実行 → psql で `\password app_rw` と `\password backup_ro`（パスワードは本人だけが知る）
+1. ✅ プロジェクト作成: リージョン **AWS Singapore (ap-southeast-1)**、Postgres **17**、DB 名は初期値の `neondb` のまま（`roles.sql` が owner ロール `neondb_owner` を前提にしているため）
+   - Postgres は 18 が初期値なので 17 に変える（バックアップ用イメージの `pg_dump` が 17。古い `pg_dump` は新しいサーバーを吸い出せない）
+2. ✅ テーブル作成: SQL Editor（左メニュー Postgres database → SQL Editor、DB `neondb`）で [app/schema.sql](../app/schema.sql) を実行。手元からなら `DATABASE_URL='<neondb_owner の接続文字列>' .venv/bin/flask --app app init-db` でも同じ
+3. ✅ 権限: 同じ SQL Editor で [docs/neon/roles.sql](neon/roles.sql) を実行
    - ロールは **Console ではなく SQL で作る**（Console 製は neon_superuser に入り権限が広すぎる）
-4. **test ブランチ**: Branches → New branch → **Schema only**（本番データをコピーしない）。テスト・リリース前確認に使う
-5. 保存時暗号化（AES-256）と TLS は Neon 側で常時有効。接続文字列には `sslmode=require` を付ける
-6. （有料プラン）復元期間（Point-in-time restore）を 7 日以上に
+4. ✅ パスワード（本人だけが知る。チャット・ファイル・SQL Editor に書かない）:
+   1. Mac の「ターミナル」で次を実行し、「接続文字列を貼り付けてEnter:」を出しておく（Claude のチャット欄の `!` では入力できないので不可）:
+      ```bash
+      read -rs "NEON_URL?接続文字列を貼り付けてEnter: "; echo; /opt/homebrew/opt/postgresql@17/bin/psql "$NEON_URL"; unset NEON_URL
+      ```
+   2. Neon の **Connect** → Role `neondb_owner`・**Connection pooling を OFF**（管理作業は直接接続で）→ **Copy snippet** → ターミナルで Cmd+V → Enter（画面には出ない）。`neondb=>` が出れば接続成功
+      - 先にクリップボードへ入れて `psql "$(pbpaste)"` にする方式は、コマンドをコピーした時点でクリップボードが上書きされて失敗する
+   3. ロールごとに（`app_rw` → `backup_ro`、パスワードは別々）:
+      - パスワードマネージャーで先に作って保存し、それをコピー（英数字とハイフンだけ。Apple の「強力なパスワード」の形でよい。URL に埋め込むときに変換が要らない）
+      - `` \set pw `pbpaste` `` は**コピーせず手で打つ**（チャットや手順書からコピーするとクリップボードのパスワードが上書きされる）。この行で psql の変数 `pw` に移るので、以降はコピペしてよい
+      - `\echo :{?pw}` が `TRUE` なら入った（中身は出ない）。`FALSE` のまま進むと `:'pw'` が置き換わらず `syntax error at or near ":"` になる
+      - `ALTER ROLE app_rw WITH PASSWORD :'pw';`（`:'pw'` は**そのまま**。psql が中身に置き換えて送るので画面にも `~/.psql_history` にも残らない）
+      - ※ `\password` は使えない。手元でハッシュ化して送るため、Neon が `Neon only supports being given plaintext passwords` で拒否する
+      - ※ `:'pw'` をパスワードに書き換えると画面と履歴に残る。やってしまったらそのパスワードは捨てて作り直す
+   4. 確認（app_rw を設定した直後、`pw` が残っているうちに）: `\setenv PGPASSWORD :pw` → `\c - app_rw`（聞かれずにつながる）→ `DELETE FROM moves;` が **permission denied** なら OK
+      - backup_ro: `\c - backup_ro`（パスワードはマネージャーから貼る）→ `SELECT count(*) FROM items;` が通り、`UPDATE items SET name = name;` と `CREATE TABLE x (id int);` が **permission denied** なら OK
+      - psql を抜けた後に入るなら: `psql "host=<Connect に出るホスト（-pooler なし）> dbname=neondb user=backup_ro sslmode=require"`（パスワードを聞かれる）
+   5. 片付け: `\setenv PGPASSWORD` → `\unset pw` → `\q` → ターミナルで `rm ~/.psql_history`。クリップボードも別の文字をコピーして上書き
+   - SQL Editor の `SET ROLE app_rw` は使えない（PG16 以降、ロールを作った側でも自動では成り代われない）。権限そのものは `has_table_privilege` で確認済み
+5. **test ブランチ**: Branches → New branch → **Schema only**（本番データをコピーしない）。テスト・リリース前確認に使う
+6. 保存時暗号化（AES-256）と TLS は Neon 側で常時有効。接続文字列には `sslmode=require` を付ける
+7. （有料プラン）復元期間（Point-in-time restore）を 7 日以上に
 
 ## 6. Gmail 👤
 
-1. バックアップ送信用の Google アカウントで 2 段階認証を ON
-2. 「アプリ パスワード」を発行（16 桁）→ Render の `GMAIL_APP_PASSWORD` にだけ入れる
-3. 受信側にフィルタ「件名: [喫茶在庫] DBバックアップ」→ ラベル付け・スター（迷惑メール回避）
+0. 送信元のアカウントを決める。**送信専用の Google アカウント**がおすすめ（アプリパスワードはそのアカウントのメール全体に入れる鍵なので、Render から漏れたときの被害をバックアップ用だけに閉じ込められる）。受信先（`BACKUP_MAIL_TO`）はふだんのアドレスでよい
+1. 送信元アカウントで 2 段階認証を ON: https://myaccount.google.com/signinoptions/twosv
+2. アプリパスワードを発行: https://myaccount.google.com/apppasswords → アプリ名 `cafe-stock backup` → 作成 → 出た 16 文字を**スペースを抜いて**パスワードマネージャーに保存（画面を閉じると二度と出ない）。のちに Render の `GMAIL_APP_PASSWORD` にだけ入れる
+   - 「お探しの設定はご利用いただけません」と出るときは 2 段階認証が OFF か、学校・会社の Workspace アカウントで管理者が止めている
+3. バックアップ暗号化キーを作る（パスワードマネージャーに保存。**無くすとバックアップを復号できない**。Gmail には保存しない）:
+   ```bash
+   .venv/bin/python -c "from app.crypto import generate_key; print(generate_key(), end='')" | pbcopy
+   ```
+4. 受信側の Gmail でフィルタ: 検索窓の右の調整アイコン → 件名 `[喫茶在庫] DBバックアップ` → フィルタを作成 → 「スターを付ける」「ラベルを付ける（新しいラベル `喫茶在庫バックアップ`）」「迷惑メールにしない」
+5. 手元から1通送って確かめる（Mac の「ターミナル」で。秘密は画面にもシェル履歴にも残らず、`( )` の中だけで消える）。`<ホスト>` は Neon の Connect に出るホスト（`-pooler` なし）:
+   ```bash
+   ( cd ~/Desktop/20261103 && read "GMAIL_USER?送信元のGmailアドレス: " && read "BACKUP_MAIL_TO?受信先のアドレス: " && read -rs "PGPASSWORD?backup_ro のパスワード: " && echo && read -rs "BACKUP_ENCRYPTION_KEY?バックアップ暗号化キー: " && echo && read -rs "GMAIL_APP_PASSWORD?アプリパスワード: " && echo && export GMAIL_USER BACKUP_MAIL_TO PGPASSWORD BACKUP_ENCRYPTION_KEY GMAIL_APP_PASSWORD="${GMAIL_APP_PASSWORD// /}" BACKUP_DATABASE_URL="postgresql://backup_ro@<ホスト>/neondb?sslmode=require" PG_DUMP=/opt/homebrew/opt/postgresql@17/bin/pg_dump && .venv/bin/python backup/backup_db.py )
+   ```
+   - 聞かれるたびにパスワードマネージャーからコピー → Cmd+V → Enter（コマンドは1行なので、先に貼っても入力待ちで止まる）
+   - `送信しました: cafe_YYYYMMDD_HHMM.dump.enc` が出て、受信側にラベル付きで届けば OK。中身は暗号化済みなので、添付を開いても読めないのが正しい
 
 ## 7. Render 👤
 
