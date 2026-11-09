@@ -126,10 +126,21 @@ web は **free（無料）**、バックアップの Cron は Gmail が済むま
 1. **New** → **Blueprint** → `AchieveOn/20261103` → Blueprint の名前 `cafe-stock` → `render.yaml` から web 1本（Free）が出ることを確認
 2. 入力を求められる環境変数（チャットや画面共有には出さない）:
 
-   | 変数                 | 中身                                                                                                                                                                                               |
-   | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `DATABASE_URL`       | app_rw の接続文字列 `postgresql://app_rw:<パスワード>@<ホスト>/neondb?sslmode=require`。ホストは Neon の Connect（pooling ON の `-pooler` 付きでよい）。パスワードマネージャーの中で組み立てて貼る |
-   | `APP_ENCRYPTION_KEY` | 下のコマンドで作った鍵。**先にパスワードマネージャーに保存**してから Render に貼る（失くすと仕入先・原価が二度と読めない）                                                                         |
+   | 変数                 | 中身                                                                                                                       |
+   | -------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+   | `DATABASE_URL`       | app_rw の接続文字列 `postgresql://app_rw:<パスワード>@<ホスト>/neondb?sslmode=require`。下のコマンドで組み立てる           |
+   | `APP_ENCRYPTION_KEY` | 下のコマンドで作った鍵。**先にパスワードマネージャーに保存**してから Render に貼る（失くすと仕入先・原価が二度と読めない） |
+
+   `DATABASE_URL` はパスワードに記号（`@` `:` `/` `?` `#` `%` など）が入ると壊れるので、下のコマンドで組み立ててクリップボードに入れる（記号は自動で `%40` などに置き換わる。画面にも履歴にも残らない）:
+
+   ```bash
+   ( read "H?ホスト（-pooler 付き）: " && read -rs "P?app_rw のパスワード: " && echo && H="$H" P="$P" python3 -c 'import os,urllib.parse as u;print("postgresql://app_rw:"+u.quote(os.environ["P"],safe="")+"@"+os.environ["H"]+"/neondb?sslmode=require",end="")' | pbcopy && echo "クリップボードにコピーしました" )
+   ```
+
+   - ホストは Neon の Connect（Connection pooling ON）に出る `ep-…-pooler.….neon.tech` の部分だけ
+   - コピーできたら Render の `DATABASE_URL` に貼る（パスワードマネージャーにも「app_rw の接続文字列」として保存しておくと 8 で使える）
+
+   `APP_ENCRYPTION_KEY` は:
 
    ```bash
    cd ~/Desktop/20261103 && .venv/bin/python -c "from app.crypto import generate_key; print(generate_key())" | pbcopy
