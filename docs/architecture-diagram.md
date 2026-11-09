@@ -27,7 +27,7 @@ flowchart TB
     VS["VS Code<br/>+ Claude Code"]
     HK["ハーネス Hooks<br/>.env を AI に読ませない"]
     GHK["Git hooks<br/>GitFlow ・ Betterleaks ・ テスト"]
-    TST["pytest 44件<br/>壊し検査 10/10"]
+    TST["pytest 122件<br/>壊し検査 19/19"]
     APP["Flask アプリ<br/>ログイン ・ 在庫 ・ 暗号化"]
     LDB[("ローカル<br/>PostgreSQL 17")]
     VS --> HK
@@ -45,14 +45,14 @@ flowchart TB
     GF --> PRC
   end
 
-  subgraph P["`**③ 本番** ：未接続`"]
+  subgraph P["`**③ 本番** ：Neon だけ作成済み`"]
     direction LR
     USR["店主 ・ スタッフ"]
     BP["Render<br/>Blueprint"]
     WEB["HTTPS<br/>gunicorn ・ Flask"]
     AUTH["門番 + ログイン<br/>owner / staff"]
     INV["在庫 ・ 入出庫<br/>仕入先は暗号化"]
-    NEON[("Neon 本番<br/>main ブランチ")]
+    NEON[("Neon 本番<br/>production ブランチ")]
     NT[("Neon test<br/>CI 用 ・ 任意")]
     CRON["Render Cron<br/>毎日3時 暗号化"]
     GM["Gmail<br/>バックアップ受信"]
@@ -71,7 +71,7 @@ flowchart TB
   style G fill:#fbfbf9,stroke:#d2b06a,color:#3a2a05
   style P fill:#fbfbf9,stroke:#a5a5a0,color:#33332f,stroke-dasharray:4 3
 
-  class VS,HK,GHK,APP,LDB,TST,ACT done
+  class VS,HK,GHK,APP,LDB,TST,ACT,NEON done
   class GF,PRC ready
-  class USR,BP,WEB,AUTH,INV,NEON,NT,CRON,GM todo
+  class USR,BP,WEB,AUTH,INV,NT,CRON,GM todo
 ```

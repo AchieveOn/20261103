@@ -1,4 +1,4 @@
-# GitFlow の合流方向を PR で強制する（ローカルの Git hooks をすり抜けても止める）
+# GitFlow の合流方向とコミット作者を PR で強制する（ローカルの Git hooks をすり抜けても止める）
 #   main    ← release/X.Y.Z, hotfix/X.Y.Z
 #   develop ← feature/*, bugfix/*, release/*, hotfix/*, main
 name: GitFlow
@@ -29,3 +29,22 @@ jobs:
               [[ "$HEAD_REF" =~ ^(feature|bugfix)/[a-z0-9][a-z0-9._-]*$|^(release|hotfix)/[0-9]+\.[0-9]+\.[0-9]+$|^main$ ]] && exit 0
               echo "::error::develop には feature/ bugfix/ release/ hotfix/ main からしかマージできません"; exit 1 ;;
           esac
+
+  # 公開リポジトリなので、PR のコミット作者は GitHub の noreply だけ（個人のメールを履歴に残さない）
+  author:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check commit author emails
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          bad="$(git log --format='%h %ae' "origin/$BASE_REF..$HEAD_SHA" | grep -vE ' ([^ ]+@users\.noreply\.github\.com|noreply@github\.com)$' || true)"
+          if [[ -n "$bad" ]]; then
+            echo "::error::noreply 以外の作者のコミットがあります（個人のメールが公開されます）"
+            echo "$bad" | cut -d' ' -f1
+            exit 1
+          fi

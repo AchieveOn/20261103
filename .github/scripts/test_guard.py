@@ -5,6 +5,7 @@
   - test_ 関数の数が減った
   - skip / xfail が増えた
   - mutation_check.py の壊し方リストが減った
+  - ガード（Claude Code の hooks・Git hooks・CI の設定とスクリプト）が変更された
 環境変数: BASE（比較先 ref）, APPROVED（"true" なら警告だけで通す）
 """
 
@@ -21,6 +22,14 @@ MUTATION_FILE = "tests/mutation_check.py"
 
 def git(*args: str) -> str:
     return subprocess.run(["git", *args], capture_output=True, text=True, check=True).stdout
+
+
+# 変更されたら人の承認（ラベル）が要るファイル。.claude/hooks/guard.py の PROTECTED と揃える
+GUARD_PATHS = (".claude/", ".githooks/", ".github/workflows/", ".github/scripts/")
+
+
+def guard_files(changed: list[str]) -> list[str]:
+    return [f for f in changed if f.startswith(GUARD_PATHS)]
 
 
 def tree_text(ref: str) -> str:
@@ -71,6 +80,10 @@ def main() -> int:
         print(f"{label}: {b} → {a}")
         if worse(b, a):
             problems.append(f"{label}が {b} → {a} に変化")
+
+    guards = guard_files(git("diff", "--name-only", merge_base, "HEAD").split())
+    if guards:
+        problems.append(f"ガードの設定が変更されています（人が中身を確認すること）: {', '.join(guards)}")
 
     changed = git("diff", "--name-only", merge_base, "HEAD", "--", "tests").split()
     print("変更されたテスト:", ", ".join(changed) or "なし")

@@ -67,6 +67,7 @@
 - 残り: `develop` の初回 push（Claude のガードで止まるので本人）→ PR 作成
 
 ## 2026-11-04 PR #1（feature/initial-setup → develop）
+
 - PR 作成。PR 時だけ動く検査の初回: CI（lint・pytest 44 passed・0 skipped・壊し検査）・CodeQL・GitFlow・Betterleaks は success（実行して確認済み）
 - Test guard は failure: 「skip/xfail が 0 → 4」。develop にテストが1本もない状態からの初回 PR なので、条件つき skip（DB・pg_dump が無い環境だけ飛ばす4か所）が「増えた」と数えられた。CI では 0 skipped
   - 設計どおりの停止。ラベル `test-change-approved` は人が付ける承認なので Claude は付けない（ラベル自体もリポジトリに未作成）
@@ -74,3 +75,38 @@
 - 見つけた穴: Test guard が壊し検査を 10 件ではなく 7 件と数えていた。原因は一括整形で3件が複数行に折り返され、行の形（`^\s*("app/`）で数えていたため。消されても気づけない状態だった
   - 修正: `MUTATIONS` リストの要素数を ast で数える（ファイルが無い・読めないときは 0 ＝止める側）
   - 確認（実行して確認済み・使い捨てクローン）: develop 比較で 0 → 10。折り返された1件を消すと新方式は 10 → 9 で停止、旧方式は 7 → 7 で素通り。承認ラベルありなら警告だけで通過
+
+## 2026-11-04 PR #1 マージ
+
+- 本人の指示で PR #1 を develop にマージ（merge commit `35a976e`、GitFlow どおり feature の履歴を残す）。feature/initial-setup ブランチは消さずに残してある
+- この追記と Prettier の空行1つは未コミット。次の feature ブランチで一緒にコミットする
+
+## 2026-11-04 Neon 本番 DB
+
+- 本人のアカウントで Neon のプロジェクト `cafe-stock` を作成（Claude が Chrome で操作）: AWS Singapore・Postgres 17（初期値 18 から変更。バックアップの `pg_dump` が 17 のため）・DB `neondb`・ブランチ `production`・無料プラン
+  - Neon の案内（`neon init` で owner の接続文字列を `.env` に書き、Neon MCP を入れる手順）は使わず、画面から作成。owner の鍵が手元に置かれ、AI に広い操作権限が渡るため
+- SQL Editor で `app/schema.sql`（CREATE 5件）→ `docs/neon/roles.sql`（11件）を実行。すべて成功
+- 確認（実行して確認済み）: `app_rw`・`backup_ro` とも superuser なし・neon_superuser に入っていない・public にテーブルを作れない。`app_rw` は DELETE が `login_failures` だけ、TRUNCATE なし。`backup_ro` は SELECT だけ
+- 見つけたこと: `roles.sql` の確認手順 `SET ROLE app_rw` は Neon では permission denied（PG16 以降、ロールを作った側でも自動では成り代われない）。確認方法を psql の `\c - app_rw` と `has_table_privilege` に書き換え
+- パスワード（本人がパスワードマネージャーで作成・psql で設定）: `\password` は Neon が拒否（`Neon only supports being given plaintext passwords`）。`` \set pw `pbpaste` `` → `ALTER ROLE ... PASSWORD :'pw'` に切り替え
+  - つまずき: ① `psql "$(pbpaste)"` はコマンドをコピーした時点でクリップボードが上書きされて空接続 → `read -rs` で後から貼る方式に ② `:'pw'` をパスワードに書き換えて実行（構文エラーで未登録。そのパスワードは廃棄）③ クリップボードを空にした直後に `\c` して認証失敗。SETUP.md 5-4 に反映
+- 確認（本人のターミナルで実行して確認済み）: マネージャーの app_rw パスワードで接続でき、`DELETE FROM moves;` が `permission denied for table moves`
+- backup_ro: 最初の登録は `\set` の時点でクリップボードがパスワードでなかったらしく認証失敗。2回目は `\set` が実行されておらず `syntax error at or near ":"`（変数が無いと `:'pw'` は置き換わらない）。`\echo :{?pw}` で入ったことを確かめてから登録し直して成功（本人の報告。読めて、UPDATE・CREATE TABLE は拒否）。`~/.psql_history` は本人が削除
+- 残り: test ブランチ（任意）
+
+## 2026-11-04 Gmail の手順
+
+- SETUP.md の 6 を具体化: 送信専用アカウント推奨（アプリパスワードはアカウントのメール全体の鍵のため）・2 段階認証とアプリパスワードの URL・バックアップ暗号化キーの作成・受信フィルタ・手元からの試し送信
+- 試し送信は1行のコマンドで、秘密を `read -rs` で受けて `( )` の中だけで使う（画面・シェル履歴に残さない）。backup_ro の接続はパスワード無しの URL ＋ `PGPASSWORD`
+  - 確認（機械チェックのみ）: zsh の構文チェック、ダミー値でアプリパスワードのスペース除去が効くこと。実送信は未実行（本人作業）
+
+## 2026-11-09 ガードレール（feature/guardrails）
+
+- CLAUDE.md のルールを棚卸しし、どこで守るかを docs/GUARDRAILS.md にまとめた。穴: guard.py にテストが無い・`.env` を grep / python から読める・AI がガード自身を書き換えられる・TDD の強制なし・作者メールと実名の確認が手作業・CI に ruff format が無い
+- テストを先に書いて RED を確認してから実装（guard 59件・個人情報チェック 7件・PR 検査 2件・ルール 10件）。壊し検査に9通り追加して 19/19 RED。全体 122 passed
+- 入れたもの: guard.py の強化（Bash・Grep の `.env`、hooks のすり抜け、force push、Neon 接続と鍵生成、ガード自身の保護、TDD の門）、format.py（PostToolUse で ruff format）、pre-commit の個人情報チェック、CI の Format と作者メール検査、Test guard でガード変更にラベル必須
+- 見つけたこと:
+  - このセッションは ai-lab で起動していたため、20261103 の `.claude/settings.json` のフックは効いていなかった（ガードのフォルダへの書き込みが通った）。フックは起動したフォルダの設定だけが効く。フック本体は JSON を標準入力に渡して呼び、拒否（exit 2）を確認
+  - 新しい個人情報チェックが、テストの架空の接続文字列（`user@ホスト`）をメールアドレスとして止めた。書き方を変えて通した
+  - PR #1 のマージコミット `35a976e` の作者が個人のメールアドレス（GitHub の画面でマージしたため）。公開済み。GitHub の「メールアドレスを非公開」設定は本人
+- 未確認: 20261103 で起動したセッションでのフックの実動作、`settings.local.json` の env でメンテナンスモードに入れるか、CI の Format・作者検査・ガード変更検知の GitHub 上での初回実行

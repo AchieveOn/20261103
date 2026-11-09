@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# コミット前チェック: ①GitFlowのブランチ規則 ②秘密情報ファイルの混入 ③Betterleaksでキー検出
+# コミット前チェック: ①GitFlowのブランチ規則 ②秘密情報ファイルの混入 ③個人情報（作者・メアド・denylist） ④Betterleaksでキー検出
 set -euo pipefail
 HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$HOOK_DIR/_gitflow.sh"
@@ -30,7 +30,13 @@ if [[ -n "$secret_files" ]]; then
   exit 1
 fi
 
-# ③ Betterleaks でステージ内容のキー・トークンを検出
+# ③ 個人情報: 作者メールが noreply か・追加行にメアドや denylist.local の語が無いか（公開リポジトリのため）
+if ! python3 "$HOOK_DIR/check_personal.py"; then
+  red "[personal] 公開リポジトリに個人情報が入りそうです。直してからコミットしてください"
+  exit 1
+fi
+
+# ④ Betterleaks でステージ内容のキー・トークンを検出
 if command -v betterleaks >/dev/null 2>&1; then
   if ! betterleaks git --pre-commit --staged --redact --no-banner -l warn .; then
     red "[secrets] Betterleaks がキー情報を検出しました。値を .env に移してからコミットしてください。"

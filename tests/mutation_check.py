@@ -36,6 +36,37 @@ MUTATIONS = [
     ("app/inventory.py", "if qty > stock:", "if False:", "在庫より多く使えてしまう"),
     ("app/inventory.py", "WHERE m.voided_at IS NULL), 0)", "), 0)", "取消済みも在庫に数える"),
     ("app/__init__.py", 'resp.headers["Cache-Control"] = "no-store"', "pass", "キャッシュ禁止を外す"),
+    # ===== ルール（tests/test_rules.py）=====
+    (
+        "docs/neon/roles.sql",
+        "GRANT SELECT, INSERT, UPDATE ON users, items, moves TO app_rw;",
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON users, items, moves TO app_rw;",
+        "app_rw に DELETE を広げる",
+    ),
+    (
+        "app/schema.sql",
+        "    archived      BOOLEAN NOT NULL DEFAULT FALSE,",
+        "    archived      BOOLEAN NOT NULL DEFAULT FALSE,\n    stock         INTEGER NOT NULL DEFAULT 0,",
+        "在庫数の列を足す",
+    ),
+    ("app/templates/base.html", "</body>", "<script>alert(1)</script></body>", "インライン JS を足す"),
+    ("docs/ARCHITECTURE.md", "`/moves/<id>/void` 取消（店主）、", "", "文書からルートが抜ける"),
+    # ===== ガード（tests/test_guard.py ほか）=====
+    (".claude/hooks/guard.py", "if ENV_IN_COMMAND.search(cmd):", "if False:", ".env を Bash から読ませる"),
+    (".claude/hooks/guard.py", "if TDD_CODE.match(rel) and not tests_touched(root):", "if False:", "TDD の門を外す"),
+    (
+        ".claude/hooks/guard.py",
+        'if rel.startswith(PROTECTED) and env.get("CLAUDE_GUARD_MAINTENANCE") != "1":',
+        "if False:",
+        "ガード自身の保護を外す",
+    ),
+    (".githooks/check_personal.py", "if email.endswith(NOREPLY):", "if True:", "コミット作者の確認を外す"),
+    (
+        ".github/scripts/test_guard.py",
+        "return [f for f in changed if f.startswith(GUARD_PATHS)]",
+        "return []",
+        "PR でのガード変更の検知を外す",
+    ),
 ]
 
 

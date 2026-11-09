@@ -32,6 +32,9 @@ Thumbs.db
 !.vscode/settings.json
 !.vscode/extensions.json
 
+# 個人情報チェックの禁止語（本名・店名など。各自の手元だけ）
+.githooks/denylist.local
+
 # ===== Claude Code（個人設定のみ除外。共有設定 settings.json はコミット） =====
 .claude/settings.local.json
 
