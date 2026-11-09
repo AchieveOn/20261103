@@ -20,7 +20,7 @@ services:
       - key: APP_ENCRYPTION_KEY # app.crypto.generate_key() で生成した鍵
         sync: false
       - key: ALLOWED_HOSTS # 実際の URL に合わせて直す（独自ドメインを足すならカンマ区切り）
-        value: cafe-stock.onrender.com
+        value: cafe-stock-tghx.onrender.com # Render が付けた実際の URL（cafe-stock は他で使用済みだった）
       - key: COOKIE_SECURE
         value: "1"
 

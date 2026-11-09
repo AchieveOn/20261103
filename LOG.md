@@ -125,3 +125,9 @@
 - free は Shell が使えないので、最初のユーザー登録（SETUP.md 8）を手元から本番 DB に入れる1行コマンドに変更。`set-user` は鍵を使わないので `SECRET_KEY`・`APP_ENCRYPTION_KEY` は仮の値で起動チェックを通す（ローカルの架空 DB で登録できることを確認）
 - 未確認: Render の画面での Blueprint 作成（main にコードが入ってから）、Blueprint の同期で画面の環境変数が戻るか
 - 7-1 完了（本人）: Render アカウント・GitHub 連携（AchieveOn・20261103 だけ）。最初は個人の GitHub がログイン方法と連携に入っていて「No repositories found」。Render は1ユーザーに GitHub 1つなので、個人側（使っていない既存サービス3つの連携）を外して AchieveOn でつなぎ直した
+
+## 2026-11-09 初回リリースと Render デプロイ
+
+- PR #2〜#5 をマージし、release/1.0.0 で main へ（本人）。Render の Blueprint `cafe-stock` を作成（web 1本・Free）
+- Render が付けた URL は `cafe-stock-tghx.onrender.com`（`cafe-stock` は他で使用済み）。`ALLOWED_HOSTS` が合わず、ヘルスチェック以外は Bad Host になるため hotfix/1.0.1 で修正
+- PR #5 の GitFlow / author が、PR #1 のマージコミット 35a976e（作者が個人のメール）で FAILURE。既に develop で公開済みのもので新しい漏れではない。main に入ったので次のリリースからは出ない
