@@ -10,6 +10,7 @@ ignore = ["S101"]                          # assert はテストで使う
 "tests/*" = ["S105", "S106", "S603", "S607"]
 "backup/*" = ["S603"]
 ".github/scripts/*" = ["S603", "S607"]
+".githooks/*" = ["S603", "S607"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
