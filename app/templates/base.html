@@ -12,7 +12,7 @@
   <header class="bar">
     <a class="brand" href="{{ url_for('inventory.index') }}">喫茶在庫</a>
     <nav>
-      {% if g.user.role == 'owner' %}<a href="{{ url_for('inventory.item_new') }}">品目を追加</a>{% endif %}
+      {% if g.user.role == 'owner' %}<a href="{{ url_for('inventory.orders') }}">発注リスト</a><a href="{{ url_for('inventory.item_new') }}">品目を追加</a>{% endif %}
       <span class="who">{{ g.user.login_id }}（{{ '店主' if g.user.role == 'owner' else 'スタッフ' }}）</span>
       <form method="post" action="{{ url_for('auth.logout') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

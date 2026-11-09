@@ -118,6 +118,14 @@ thead th,
 .stock td:nth-child(2) a {
   font-weight: 600;
 }
+.orders .group th {
+  background: none;
+  font-weight: 700;
+  padding-top: 18px;
+}
+.orders tbody tr.group:hover {
+  background: none;
+}
 .sheet {
   margin-bottom: 20px;
 }
@@ -348,6 +356,20 @@ button {
   }
   .record {
     grid-template-columns: 1fr;
+  }
+  /* 発注リストは、スマホでは発注点・届くまでを隠して「発注の目安」まで1画面に収める */
+  .orders thead th:nth-child(4),
+  .orders thead th:nth-child(5),
+  .orders td:nth-child(4),
+  .orders td:nth-child(5) {
+    display: none;
+  }
+  .orders th,
+  .orders td {
+    padding: 8px 6px;
+  }
+  .orders td:nth-child(2) {
+    min-width: 6.5em;
   }
   /* 4列の詳細表は、スマホでは「見出し｜値」の2列に並べ替える */
   .sheet,

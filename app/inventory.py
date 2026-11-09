@@ -1,5 +1,6 @@
 """在庫の画面と記録。在庫 = moves.delta の合計（取消済みを除く）。在庫数を直接書き換えない。"""
 
+import math
 from datetime import timedelta
 
 from flask import Blueprint, abort, current_app, flash, g, redirect, render_template, request, url_for
@@ -15,6 +16,7 @@ UNITS = ["g", "ml", "個", "本", "枚", "袋", "パック"]
 LEVEL_ORDER = {"empty": 0, "reorder": 1, "soon": 2, "ok": 3}
 LEVEL_LABEL = {"empty": "在庫切れ", "reorder": "要発注", "soon": "まもなく", "ok": "十分"}
 KIND_LABEL = {"in": "入荷", "out": "使用", "count": "棚卸し"}
+NO_SUPPLIER = "仕入先未登録"
 
 STATUS_SQL = """
 SELECT i.*,
@@ -82,6 +84,12 @@ def secret_fields(item: dict) -> dict:
     return {"supplier": dec(item["supplier_enc"]), "unit_cost": dec(item["unit_cost_enc"]), "note": dec(item["note_enc"])}
 
 
+def suggest_qty(item: dict) -> int:
+    """発注の目安: 発注点 + 届くまでの使用見込み（1日の使用 × 届くまでの日数、切り上げ）− 在庫。0 未満は 0。"""
+    need = item["threshold"] + math.ceil(item["per_day"] * item["lead_days"]) - item["stock"]
+    return max(need, 0)
+
+
 # ---------- 画面 ----------
 @bp.get("/")
 def index():
@@ -99,6 +107,20 @@ def item_detail(item_id):
     )
     secret = secret_fields(item) if g.user["role"] == "owner" else None
     return render_template("item.html", item=item, moves=moves, secret=secret, kind_label=KIND_LABEL)
+
+
+@bp.get("/orders")
+@owner_required
+def orders():
+    """発注が必要な品目（在庫切れ・要発注・まもなく）を仕入先ごとにまとめる。仕入先は暗号化列なので店主だけ。"""
+    groups: dict[str, list[dict]] = {}
+    for it in load_items():
+        if it["level"] == "ok":
+            continue
+        supplier = secret_fields(it)["supplier"] or NO_SUPPLIER
+        groups.setdefault(supplier, []).append({**it, "suggest": suggest_qty(it)})
+    names = sorted(groups, key=lambda s: (s == NO_SUPPLIER, s))
+    return render_template("orders.html", groups=[(s, groups[s]) for s in names])
 
 
 @bp.post("/items/<int:item_id>/moves")

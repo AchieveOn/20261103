@@ -118,7 +118,7 @@ flowchart TB
   subgraph APP["アプリ（Render 上の Flask）"]
     G["門番 auth.guard()<br/>① Host確認 → ② ログイン確認 → ③ CSRF確認"]
     A["auth.py<br/>ログイン・ログアウト・ロック"]
-    I["inventory.py<br/>一覧・詳細・入出庫・取消・品目編集"]
+    I["inventory.py<br/>一覧・詳細・入出庫・取消・品目編集・発注リスト"]
     C["crypto.py<br/>仕入先・単価・メモを暗号化/復号"]
     D["db.py<br/>店員カード app_rw で接続"]
     H["返事に安全ヘッダ<br/>CSP・no-store・X-Frame-Options"]
@@ -137,15 +137,15 @@ flowchart TB
   H -.-> B
 ```
 
-| ファイル                       | 役割                                                                 | 画面・コマンド                                                                                                                                           |
-| ------------------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `app/__init__.py`              | アプリの組み立て。鍵が足りなければ起動しない・安全ヘッダ・`/healthz` | `/healthz`（Render の死活確認）                                                                                                                          |
-| `app/config.py`                | 設定。鍵は環境変数から読むだけ（ファイルに書かない）                 | ―                                                                                                                                                        |
-| `app/auth.py`                  | 門番とログイン                                                       | `/login` `/logout`、`flask --app app auth set-user` / `disable-user`                                                                                     |
-| `app/inventory.py`             | 在庫の画面と記録                                                     | `/` 一覧、`/items/<id>` 詳細、`/items/<id>/moves` 入出庫、`/moves/<id>/void` 取消（店主）、`/items/new` `/items/<id>/edit` `/items/<id>/archive`（店主） |
-| `app/crypto.py`                | Fernet で暗号化/復号                                                 | ―                                                                                                                                                        |
-| `app/db.py` `app/schema.sql`   | DB 接続と表の定義                                                    | `flask --app app init-db`                                                                                                                                |
-| `app/templates/` `app/static/` | 画面（HTML・CSS）。外部読み込み・インライン JS なし                  | ―                                                                                                                                                        |
+| ファイル                       | 役割                                                                 | 画面・コマンド                                                                                                                                                                         |
+| ------------------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/__init__.py`              | アプリの組み立て。鍵が足りなければ起動しない・安全ヘッダ・`/healthz` | `/healthz`（Render の死活確認）                                                                                                                                                        |
+| `app/config.py`                | 設定。鍵は環境変数から読むだけ（ファイルに書かない）                 | ―                                                                                                                                                                                      |
+| `app/auth.py`                  | 門番とログイン                                                       | `/login` `/logout`、`flask --app app auth set-user` / `disable-user`                                                                                                                   |
+| `app/inventory.py`             | 在庫の画面と記録                                                     | `/` 一覧、`/items/<id>` 詳細、`/items/<id>/moves` 入出庫、`/moves/<id>/void` 取消（店主）、`/orders` 発注リスト（店主）、`/items/new` `/items/<id>/edit` `/items/<id>/archive`（店主） |
+| `app/crypto.py`                | Fernet で暗号化/復号                                                 | ―                                                                                                                                                                                      |
+| `app/db.py` `app/schema.sql`   | DB 接続と表の定義                                                    | `flask --app app init-db`                                                                                                                                                              |
+| `app/templates/` `app/static/` | 画面（HTML・CSS）。外部読み込み・インライン JS なし                  | ―                                                                                                                                                                                      |
 
 ## アプリの守り（app/）
 

@@ -44,6 +44,15 @@ def test_lists_only_items_that_need_ordering(owner):
     assert "十分C" not in html
 
 
+def test_soon_items_are_listed(owner):
+    """発注点より多くても、届くまでの日数のうちに切れそうなら（まもなく）載せる。"""
+    item = add_item(owner, name="減りが速いD", threshold="10", lead_days="3")
+    record(owner, item, "in", 1000)
+    record(owner, item, "out", 300)  # 登録したばかりなので1日300 → 残り約2.3日 ≦ 3日
+    row = row_of(orders_html(owner), "減りが速いD")
+    assert "まもなく" in row
+
+
 def test_grouped_by_supplier_with_unregistered_last(owner):
     add_item(owner, name="豆いち", supplier="北浜珈琲商会")
     add_item(owner, name="牛乳", supplier="みどり乳業", category="乳製品", unit="本")
