@@ -102,23 +102,63 @@ gh pr create --base develop --fill         # CI・CodeQL・Test guard・GitFlow 
 
 ## 7. Render 👤
 
-1. Dashboard → New → **Blueprint** → このリポジトリ → `render.yaml` を読み込む
-2. `sync: false` の環境変数を入力（ARCHITECTURE.md「鍵と接続文字列の置き場所」）
-   - `DATABASE_URL` = app_rw、`BACKUP_DATABASE_URL` = backup_ro
-   - 鍵 2 本は `.venv/bin/python -c "from app.crypto import generate_key; print(generate_key())"` で別々に生成し、**パスワードマネージャにも控える**
-3. 作られた URL に合わせて `ALLOWED_HOSTS` を直す（例 `cafe-stock-xxxx.onrender.com`）
-4. 費用: web `starter` と cron `starter` は有料。web を `free` にすると無料だが15分無操作でスリープする
-5. Render のアカウントは 2 段階認証を ON
+web は **free（無料）**、バックアップの Cron は Gmail が済むまで外している（`render.yaml` 参照）。料金は 2026-11-09 に render.com/pricing と render.com/docs/free で確認。
+
+| もの           | プラン               | 費用                        | 注意                                                                              |
+| -------------- | -------------------- | --------------------------- | --------------------------------------------------------------------------------- |
+| ワークスペース | Hobby                | $0                          |                                                                                   |
+| web（アプリ）  | free                 | $0（月750時間まで）         | 15分無操作でスリープ・次に開くと約1分待つ。Shell が使えない。メール送信ポート不可 |
+| Cron           | なし（Gmail の後で） | $0.00016/分（動いた分だけ） | 無料プランが無いので、戻すときは支払い方法の登録が要る（1日1分なら月 約 $0.005）  |
+
+毎日お店で使うようになって待ち時間が気になったら、`render.yaml` の web を `plan: starter`（$7/月）にする PR を出す。
+
+### 7-1. アカウントと GitHub 連携（いまできる）
+
+1. https://dashboard.render.com/register でアカウント作成（パスワードはパスワードマネージャーで作る）
+2. 右上のアカウント → **Account Settings** → Two-Factor Authentication を ON
+3. 支払い方法は登録しない（無料のまま。使いすぎた月は止まるだけで請求されない）
+4. **New** → **Blueprint** → GitHub を接続 → GitHub 側の画面で **Only select repositories** → `AchieveOn/20261103` だけを選んで Install（全部のリポジトリは許可しない）
+   - ここでいったん止める（main がまだ空なので、Blueprint は 9 の初回リリースの後）
+   - Render は **1ユーザーに GitHub アカウント1つ**（ログイン用と連携用で同じ枠）。別の GitHub（個人など）がつながっていると、GitHub 側の許可は通るのに「No repositories found」になり、追加もできない。そのときは Account Settings で Git Deployment Credentials とログイン方法の GitHub を外してから、AchieveOn でつなぎ直す（外した側のサービスは動き続けるが、push での自動デプロイが止まる）
+
+### 7-2. Blueprint（9 の初回リリースで main にコードが入ってから）
+
+1. **New** → **Blueprint** → `AchieveOn/20261103` → Blueprint の名前 `cafe-stock` → `render.yaml` から web 1本（Free）が出ることを確認
+2. 入力を求められる環境変数（チャットや画面共有には出さない）:
+
+   | 変数                 | 中身                                                                                                                                                                                               |
+   | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `DATABASE_URL`       | app_rw の接続文字列 `postgresql://app_rw:<パスワード>@<ホスト>/neondb?sslmode=require`。ホストは Neon の Connect（pooling ON の `-pooler` 付きでよい）。パスワードマネージャーの中で組み立てて貼る |
+   | `APP_ENCRYPTION_KEY` | 下のコマンドで作った鍵。**先にパスワードマネージャーに保存**してから Render に貼る（失くすと仕入先・原価が二度と読めない）                                                                         |
+
+   ```bash
+   cd ~/Desktop/20261103 && .venv/bin/python -c "from app.crypto import generate_key; print(generate_key())" | pbcopy
+   ```
+
+   - `SECRET_KEY` は Render が自動で作る。`ALLOWED_HOSTS`・`COOKIE_SECURE` は `render.yaml` に書いてある
+
+3. **Apply** → デプロイが終わったら、サービスの画面上部の URL を確認
+   - URL が `cafe-stock.onrender.com` でなければ（名前が先に使われていると `cafe-stock-xxxx` になる）、`render.yaml` の `ALLOWED_HOSTS` をその値に直す PR を出す（画面だけで直すと Blueprint の同期で戻ることがある）
+4. `https://<URL>/healthz` が `{"db":"ok","status":"ok"}` なら OK（スリープ中なら約1分待つ）
+
+### 7-3. Cron を戻す（Gmail の後）
+
+1. `render.yaml` の Cron の行頭の `# ` を外す PR → develop → release → main
+2. Render に支払い方法を登録（Cron は無料プランが無い）
+3. 入力を求められる環境変数: `BACKUP_DATABASE_URL`（backup_ro）・`BACKUP_ENCRYPTION_KEY`（7-2 とは**別の鍵**・同じコマンドで作る）・`GMAIL_USER`・`GMAIL_APP_PASSWORD`・`BACKUP_MAIL_TO`
+4. Cron の画面で **Trigger Run** → Gmail に届くか確認
 
 ## 8. 最初のユーザー 👤
 
-Render の Shell（web サービス → Shell）か、手元から本番の app_rw URL を一時的に渡して:
+free の web は Render の Shell が使えないので、手元の Mac のターミナルから本番 DB に登録する（1行のコマンド。接続文字列は画面にも履歴にも残らない）:
 
 ```bash
-flask --app app auth set-user <店主ID> --role owner
-flask --app app auth set-user <スタッフID> --role staff
-flask --app app auth disable-user <ID>      # 退職時など
+( cd ~/Desktop/20261103 && read -rs "DATABASE_URL?app_rw の接続文字列: " && echo && export DATABASE_URL SECRET_KEY=cli APP_ENCRYPTION_KEY=cli && .venv/bin/flask --app app auth set-user <店主ID> --role owner )
 ```
+
+- 接続文字列を聞かれたら、パスワードマネージャーからコピー → Cmd+V → Enter。次にそのユーザーのパスワードを2回
+- `SECRET_KEY=cli` などは起動チェックを通すための仮の値（ユーザー登録では鍵を使わない）
+- スタッフは最後を `set-user <スタッフID> --role staff`、退職時は `disable-user <ID>` にする
 
 ## 9. 初回リリース
 

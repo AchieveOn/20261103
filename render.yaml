@@ -6,7 +6,7 @@ services:
     name: cafe-stock
     runtime: python
     region: singapore # Neon の ap-southeast-1（シンガポール）に近い所
-    plan: starter # free は15分無操作でスリープ＆初回表示が遅い。費用を抑えるなら free に変更
+    plan: free # 無料。15分無操作でスリープし、次に開くと約1分待つ。Shell も使えない。毎日使うなら starter（$7/月）に
     branch: main # GitFlow: main = 本番
     autoDeployTrigger: checksPass # CD: main への push で GitHub の CI が通ったときだけ自動デプロイ
     buildCommand: pip install -r requirements.txt
@@ -25,24 +25,26 @@ services:
         value: "1"
 
   # DB のバックアップ（毎日 3:00 JST に pg_dump → 暗号化 → Gmail）
-  - type: cron
-    name: cafe-stock-backup
-    runtime: docker
-    region: singapore
-    plan: starter
-    branch: main
-    autoDeployTrigger: checksPass
-    schedule: "0 18 * * *" # UTC 18:00 = JST 3:00
-    dockerfilePath: ./backup/Dockerfile
-    dockerContext: ./backup
-    envVars:
-      - key: BACKUP_DATABASE_URL # Neon の backup_ro ロール（読み取り専用）の接続文字列
-        sync: false
-      - key: BACKUP_ENCRYPTION_KEY # APP_ENCRYPTION_KEY とは別の鍵
-        sync: false
-      - key: GMAIL_USER
-        sync: false
-      - key: GMAIL_APP_PASSWORD # Google アカウントの「アプリパスワード」
-        sync: false
-      - key: BACKUP_MAIL_TO
-        sync: false
+  # ⏸ Gmail の準備（SETUP.md 6）が済むまで外している。戻すときは下の行頭の「# 」を外す。
+  # 費用は動いた時間だけ（$0.00016/分。1回1分なら月 約 $0.005）。それまでのバックアップは Neon の履歴からの復元（さかのぼれる期間は短い）だけ
+  # - type: cron
+  #   name: cafe-stock-backup
+  #   runtime: docker
+  #   region: singapore
+  #   plan: starter
+  #   branch: main
+  #   autoDeployTrigger: checksPass
+  #   schedule: "0 18 * * *" # UTC 18:00 = JST 3:00
+  #   dockerfilePath: ./backup/Dockerfile
+  #   dockerContext: ./backup
+  #   envVars:
+  #     - key: BACKUP_DATABASE_URL # Neon の backup_ro ロール（読み取り専用）の接続文字列
+  #       sync: false
+  #     - key: BACKUP_ENCRYPTION_KEY # APP_ENCRYPTION_KEY とは別の鍵
+  #       sync: false
+  #     - key: GMAIL_USER
+  #       sync: false
+  #     - key: GMAIL_APP_PASSWORD # Google アカウントの「アプリパスワード」
+  #       sync: false
+  #     - key: BACKUP_MAIL_TO
+  #       sync: false

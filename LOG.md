@@ -117,3 +117,11 @@
 - TDD: テスト8件を先に書いて RED（404・ImportError）をコミット → 実装で GREEN → 文書のズレ検知（test_rules）が RED になり、ARCHITECTURE.md の表と図に `/orders` を足して GREEN。「まもなく」のテストを1件追加。全体 131 passed、壊し検査に「発注リストを staff に見せる」を足して 20/20 RED
 - 画面確認（架空データ・ローカルの使い捨てサーバー）: 最初は仕入先ごとに別の表で列がずれた → 1つの表に仕入先の見出し行を入れる形に。スマホ幅（375px）では品名が1文字ずつ折れ、発注の目安が見切れた → 発注点・届くまでを隠して収めた（表の幅 = 画面内）
 - ブランチは feature/guardrails の上に重ねている（ガード入りの状態で開発するため）。PR は guardrails → order-list の順
+
+## 2026-11-09 Render の準備（feature/render-free）
+
+- 料金を公式で確認（render.com/pricing・docs/free）: ワークスペース Hobby $0、web free $0（月750時間・15分でスリープ・復帰約1分・Shell 不可・SMTP ポート不可）/ starter $7/月、Cron は無料プラン無し $0.00016/分
+- 決めたこと: web は free（本人）。Cron は Gmail が済むまで `render.yaml` でコメントアウト（その間のバックアップは Neon の履歴からの復元だけ）
+- free は Shell が使えないので、最初のユーザー登録（SETUP.md 8）を手元から本番 DB に入れる1行コマンドに変更。`set-user` は鍵を使わないので `SECRET_KEY`・`APP_ENCRYPTION_KEY` は仮の値で起動チェックを通す（ローカルの架空 DB で登録できることを確認）
+- 未確認: Render の画面での Blueprint 作成（main にコードが入ってから）、Blueprint の同期で画面の環境変数が戻るか
+- 7-1 完了（本人）: Render アカウント・GitHub 連携（AchieveOn・20261103 だけ）。最初は個人の GitHub がログイン方法と連携に入っていて「No repositories found」。Render は1ユーザーに GitHub 1つなので、個人側（使っていない既存サービス3つの連携）を外して AchieveOn でつなぎ直した
