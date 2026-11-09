@@ -6,18 +6,18 @@
 
 凡例: ✅ 手元で実行して確認済み / 📄 ファイルはできている・本番では未確認 / 👤 本人のアカウント作業待ち
 
-| 場所                                                          | 状態  | 中身                                                                                                                                                        | 残り                                                |
-| ------------------------------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| VS Code + Claude Code（ハーネス Hooks）                       | ✅    | `.claude/hooks/guard.py`（テスト59件）・`format.py`。ルールとの対応は [GUARDRAILS.md](GUARDRAILS.md)                                                        | このフォルダで起動したセッションだけ効く            |
-| 秘密情報の分離                                                | ✅    | `.gitignore` `.env.example`（`.env` は手元だけ・chmod 600）                                                                                                 | なし                                                |
-| アプリ本体                                                    | ✅    | `app/`（ローカル Postgres 17 で起動し、ブラウザで店主/スタッフ/スマホ幅を確認）                                                                             | なし                                                |
-| テスト                                                        | ✅    | 122件 pass・壊し検査 19/19 RED（ルールとガードのテストを含む）                                                                                              | なし                                                |
-| Git hooks（GitFlow・Betterleaks・個人情報）                   | ✅    | `.githooks/`（使い捨てリポジトリで違反させて全部停止を確認）・`check_personal.py`（テスト7件）                                                              | 禁止語リスト `denylist.local` は本人が作る          |
-| Git のブランチ                                                | ✅    | PR #1 で `feature/initial-setup` → `develop` にマージ済み（2026-11-04）                                                                                     | `release/1.0.0` → `main`（Render は main から配信） |
-| GitHub Actions（CI・CodeQL・Test guard・GitFlow・Dependabot） | ✅ 📄 | `.github/`。PR #1 で CI・壊し検査・CodeQL・Test guard・GitFlow・Betterleaks が全部成功                                                                      | ブランチ保護は 👤                                   |
-| Render（CD・Web・Cron）                                       | 📄 👤 | `render.yaml` `backup/`                                                                                                                                     | Blueprint 作成・環境変数の入力                      |
-| Neon（本番DB・テストDB・権限）                                | ✅    | プロジェクト `cafe-stock`（Singapore・PG17）。`schema.sql`・`roles.sql` を実行。パスワード設定後、app_rw は DELETE 拒否・backup_ro は読むだけを実接続で確認 | test ブランチ（任意）                               |
-| Gmail（バックアップ受信）                                     | 📄 👤 | `backup/backup_db.py`（暗号化と復号はテスト済み）                                                                                                           | アプリパスワード発行・実送信の確認                  |
+| 場所                                                          | 状態  | 中身                                                                                                                                                        | 残り                                                 |
+| ------------------------------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| VS Code + Claude Code（ハーネス Hooks）                       | ✅    | `.claude/hooks/guard.py`（テスト59件）・`format.py`。ルールとの対応は [GUARDRAILS.md](GUARDRAILS.md)                                                        | このフォルダで起動したセッションだけ効く             |
+| 秘密情報の分離                                                | ✅    | `.gitignore` `.env.example`（`.env` は手元だけ・chmod 600）                                                                                                 | なし                                                 |
+| アプリ本体                                                    | ✅    | `app/`（ローカル Postgres 17 で起動し、ブラウザで店主/スタッフ/スマホ幅を確認）                                                                             | なし                                                 |
+| テスト                                                        | ✅    | 122件 pass・壊し検査 19/19 RED（ルールとガードのテストを含む）                                                                                              | なし                                                 |
+| Git hooks（GitFlow・Betterleaks・個人情報）                   | ✅    | `.githooks/`（使い捨てリポジトリで違反させて全部停止を確認）・`check_personal.py`（テスト7件）                                                              | 禁止語リスト `denylist.local` は本人が作る           |
+| Git のブランチ                                                | ✅    | PR #1 で `feature/initial-setup` → `develop` にマージ済み（2026-11-04）                                                                                     | `release/1.0.0` → `main`（Render は main から配信）  |
+| GitHub Actions（CI・CodeQL・Test guard・GitFlow・Dependabot） | ✅ 📄 | `.github/`。PR #1 で CI・壊し検査・CodeQL・Test guard・GitFlow・Betterleaks が全部成功                                                                      | ブランチ保護は 👤                                    |
+| Render（CD・Web・Cron）                                       | 📄 👤 | `render.yaml`（web は free・Cron は Gmail の後まで外す）`backup/`                                                                                           | アカウント・GitHub 連携 → 初回リリース後に Blueprint |
+| Neon（本番DB・テストDB・権限）                                | ✅    | プロジェクト `cafe-stock`（Singapore・PG17）。`schema.sql`・`roles.sql` を実行。パスワード設定後、app_rw は DELETE 拒否・backup_ro は読むだけを実接続で確認 | test ブランチ（任意）                                |
+| Gmail（バックアップ受信）                                     | 📄 👤 | `backup/backup_db.py`（暗号化と復号はテスト済み）                                                                                                           | アプリパスワード発行・実送信の確認                   |
 
 手順の続きは [SETUP.md](SETUP.md) の 5-5（Neon の test ブランチ）と 6（Gmail）から。
 
@@ -75,7 +75,7 @@ flowchart TB
     INV["在庫 ・ 入出庫<br/>仕入先は暗号化"]
     NEON[("Neon 本番<br/>production ブランチ")]
     NT[("Neon test<br/>CI 用 ・ 任意")]
-    CRON["Render Cron<br/>毎日3時 暗号化"]
+    CRON["Render Cron<br/>毎日3時 暗号化<br/>（Gmail の後）"]
     GM["Gmail<br/>バックアップ受信"]
     USR -. 公開後に HTTPS .-> WEB
     BP --> WEB --> AUTH --> INV -->|app_rw| NEON

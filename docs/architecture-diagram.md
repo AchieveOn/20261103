@@ -54,7 +54,7 @@ flowchart TB
     INV["在庫 ・ 入出庫<br/>仕入先は暗号化"]
     NEON[("Neon 本番<br/>production ブランチ")]
     NT[("Neon test<br/>CI 用 ・ 任意")]
-    CRON["Render Cron<br/>毎日3時 暗号化"]
+    CRON["Render Cron<br/>毎日3時 暗号化<br/>（Gmail の後）"]
     GM["Gmail<br/>バックアップ受信"]
     USR -. 公開後に HTTPS .-> WEB
     BP --> WEB --> AUTH --> INV -->|app_rw| NEON
