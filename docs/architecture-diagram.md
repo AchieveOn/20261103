@@ -27,7 +27,7 @@ flowchart TB
     VS["VS Code<br/>+ Claude Code"]
     HK["ハーネス Hooks<br/>.env を AI に読ませない"]
     GHK["Git hooks<br/>GitFlow ・ Betterleaks ・ テスト"]
-    TST["pytest 44件<br/>壊し検査 10/10"]
+    TST["pytest 122件<br/>壊し検査 19/19"]
     APP["Flask アプリ<br/>ログイン ・ 在庫 ・ 暗号化"]
     LDB[("ローカル<br/>PostgreSQL 17")]
     VS --> HK

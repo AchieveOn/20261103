@@ -8,11 +8,11 @@
 
 | 場所                                                          | 状態  | 中身                                                                                                                                                        | 残り                                                |
 | ------------------------------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| VS Code + Claude Code（ハーネス Hooks）                       | ✅    | `.claude/hooks/guard.py`（11パターンで確認）                                                                                                                | なし                                                |
+| VS Code + Claude Code（ハーネス Hooks）                       | ✅    | `.claude/hooks/guard.py`（テスト59件）・`format.py`。ルールとの対応は [GUARDRAILS.md](GUARDRAILS.md)                                                        | このフォルダで起動したセッションだけ効く            |
 | 秘密情報の分離                                                | ✅    | `.gitignore` `.env.example`（`.env` は手元だけ・chmod 600）                                                                                                 | なし                                                |
 | アプリ本体                                                    | ✅    | `app/`（ローカル Postgres 17 で起動し、ブラウザで店主/スタッフ/スマホ幅を確認）                                                                             | なし                                                |
-| テスト                                                        | ✅    | 44件 pass・壊し検査 10/10 RED                                                                                                                               | なし                                                |
-| Git hooks（GitFlow・Betterleaks）                             | ✅    | `.githooks/`（使い捨てリポジトリで違反させて全部停止を確認）                                                                                                | なし                                                |
+| テスト                                                        | ✅    | 122件 pass・壊し検査 19/19 RED（ルールとガードのテストを含む）                                                                                              | なし                                                |
+| Git hooks（GitFlow・Betterleaks・個人情報）                   | ✅    | `.githooks/`（使い捨てリポジトリで違反させて全部停止を確認）・`check_personal.py`（テスト7件）                                                              | 禁止語リスト `denylist.local` は本人が作る          |
 | Git のブランチ                                                | ✅    | PR #1 で `feature/initial-setup` → `develop` にマージ済み（2026-11-04）                                                                                     | `release/1.0.0` → `main`（Render は main から配信） |
 | GitHub Actions（CI・CodeQL・Test guard・GitFlow・Dependabot） | ✅ 📄 | `.github/`。PR #1 で CI・壊し検査・CodeQL・Test guard・GitFlow・Betterleaks が全部成功                                                                      | ブランチ保護は 👤                                   |
 | Render（CD・Web・Cron）                                       | 📄 👤 | `render.yaml` `backup/`                                                                                                                                     | Blueprint 作成・環境変数の入力                      |
@@ -48,7 +48,7 @@ flowchart TB
     VS["VS Code<br/>+ Claude Code"]
     HK["ハーネス Hooks<br/>.env を AI に読ませない"]
     GHK["Git hooks<br/>GitFlow ・ Betterleaks ・ テスト"]
-    TST["pytest 44件<br/>壊し検査 10/10"]
+    TST["pytest 122件<br/>壊し検査 19/19"]
     APP["Flask アプリ<br/>ログイン ・ 在庫 ・ 暗号化"]
     LDB[("ローカル<br/>PostgreSQL 17")]
     VS --> HK
@@ -103,7 +103,7 @@ flowchart TB
 | -------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | エディタ       | VS Code + Claude Code    | AI が `.env`・鍵ファイルを読む/書く、`--no-verify`、main/develop への直接 push を止める                                   | `.claude/settings.json` `.claude/hooks/guard.py` |
 | 秘密情報の分離 | `.env` / `.env.example`  | 値は `.env`（gitignore・chmod 600）だけ。コードと Git には雛形だけ                                                        | `.gitignore` `.env.example`                      |
-| テスト         | pytest + 壊し検査        | 44件。守り（CSRF・権限・暗号化など）を外すと落ちることを `mutation_check.py` で確認                                       | `tests/`                                         |
+| テスト         | pytest + 壊し検査        | 122件。守り（CSRF・権限・暗号化・ガード・ルール）を外すと落ちることを `mutation_check.py` で確認                          | `tests/`                                         |
 | Git            | Git hooks                | GitFlow 違反のコミット/push/マージを止める・Betterleaks でキー混入を止める・push 前にテスト                               | `.githooks/`                                     |
 | GitHub         | Actions                  | CI（テスト）、Betterleaks（全履歴）、CodeQL（コード解析）、Test guard（テストの変更を感知）、GitFlow チェック、Dependabot | `.github/`                                       |
 | Render         | Blueprint                | CD: main で CI が通ったら自動デプロイ。Cron でバックアップ                                                                | `render.yaml` `backup/`                          |
