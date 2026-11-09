@@ -36,6 +36,7 @@ MUTATIONS = [
     ("app/inventory.py", "if qty > stock:", "if False:", "在庫より多く使えてしまう"),
     ("app/inventory.py", "WHERE m.voided_at IS NULL), 0)", "), 0)", "取消済みも在庫に数える"),
     ("app/__init__.py", 'resp.headers["Cache-Control"] = "no-store"', "pass", "キャッシュ禁止を外す"),
+    ("app/inventory.py", '@bp.get("/orders")\n@owner_required', '@bp.get("/orders")', "発注リスト（仕入先）を staff に見せる"),
     # ===== ルール（tests/test_rules.py）=====
     (
         "docs/neon/roles.sql",
