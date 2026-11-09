@@ -124,3 +124,4 @@
 - 決めたこと: web は free（本人）。Cron は Gmail が済むまで `render.yaml` でコメントアウト（その間のバックアップは Neon の履歴からの復元だけ）
 - free は Shell が使えないので、最初のユーザー登録（SETUP.md 8）を手元から本番 DB に入れる1行コマンドに変更。`set-user` は鍵を使わないので `SECRET_KEY`・`APP_ENCRYPTION_KEY` は仮の値で起動チェックを通す（ローカルの架空 DB で登録できることを確認）
 - 未確認: Render の画面での Blueprint 作成（main にコードが入ってから）、Blueprint の同期で画面の環境変数が戻るか
+- 7-1 完了（本人）: Render アカウント・GitHub 連携（AchieveOn・20261103 だけ）。最初は個人の GitHub がログイン方法と連携に入っていて「No repositories found」。Render は1ユーザーに GitHub 1つなので、個人側（使っていない既存サービス3つの連携）を外して AchieveOn でつなぎ直した

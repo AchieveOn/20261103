@@ -119,6 +119,7 @@ web は **free（無料）**、バックアップの Cron は Gmail が済むま
 3. 支払い方法は登録しない（無料のまま。使いすぎた月は止まるだけで請求されない）
 4. **New** → **Blueprint** → GitHub を接続 → GitHub 側の画面で **Only select repositories** → `AchieveOn/20261103` だけを選んで Install（全部のリポジトリは許可しない）
    - ここでいったん止める（main がまだ空なので、Blueprint は 9 の初回リリースの後）
+   - Render は **1ユーザーに GitHub アカウント1つ**（ログイン用と連携用で同じ枠）。別の GitHub（個人など）がつながっていると、GitHub 側の許可は通るのに「No repositories found」になり、追加もできない。そのときは Account Settings で Git Deployment Credentials とログイン方法の GitHub を外してから、AchieveOn でつなぎ直す（外した側のサービスは動き続けるが、push での自動デプロイが止まる）
 
 ### 7-2. Blueprint（9 の初回リリースで main にコードが入ってから）
 
