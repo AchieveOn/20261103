@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ item.name }}{% endblock %}
+{% block main %}
+<p class="crumb"><a href="{{ url_for('inventory.index') }}">在庫</a></p>
+<div class="head">
+  <h1>{{ item.name }}</h1>
+  <span class="badge {{ item.level }}">{{ item.level_label }}</span>
+</div>
+
+<table class="sheet">
+  <tr><th>在庫</th><td class="strong">{{ item.stock }} {{ item.unit }}</td>
+      <th>発注点</th><td>{{ item.threshold }} {{ item.unit }}</td></tr>
+  <tr><th>1日の使用</th><td>{{ item.per_day }} {{ item.unit }}</td>
+      <th>残り日数</th><td>{{ item.days_left if item.days_left is not none else '—' }}（届くまで {{ item.lead_days }} 日）</td></tr>
+  <tr><th>区分</th><td colspan="3">{{ item.category }}</td></tr>
+  {% if secret %}
+  <tr class="owner"><th>仕入先</th><td>{{ secret.supplier or '—' }}</td>
+      <th>仕入単価</th><td>{{ (secret.unit_cost ~ ' 円') if secret.unit_cost else '—' }}</td></tr>
+  <tr class="owner"><th>店主メモ</th><td colspan="3" class="pre">{{ secret.note or '—' }}</td></tr>
+  {% endif %}
+</table>
+
+<form class="record" method="post" action="{{ url_for('inventory.add_move', item_id=item.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="kinds" role="radiogroup" aria-label="記録の種類">
+    <label><input type="radio" name="kind" value="out" checked><span>使用</span></label>
+    <label><input type="radio" name="kind" value="in"><span>入荷</span></label>
+    <label><input type="radio" name="kind" value="count"><span>棚卸し</span></label>
+  </div>
+  <label class="qty">数量<input name="qty" type="number" inputmode="numeric" min="0" required><span>{{ item.unit }}</span></label>
+  <label class="note">メモ<input name="note" maxlength="100"></label>
+  <button class="primary">記録する</button>
+</form>
+
+{% if g.user.role == 'owner' %}
+<p class="owner-actions">
+  <a href="{{ url_for('inventory.item_edit', item_id=item.id) }}">品目を編集</a>
+</p>
+{% endif %}
+
+<h2>記録</h2>
+<table class="log">
+  <thead><tr><th>日時</th><th>種類</th><th class="num">増減</th><th>メモ</th><th>記録者</th>{% if g.user.role == 'owner' %}<th></th>{% endif %}</tr></thead>
+  <tbody>
+  {% for m in moves %}
+    <tr class="{{ 'voided' if m.voided_at }}">
+      <td>{{ m.created_at | jst }}</td>
+      <td>{{ kind_label[m.kind] }}</td>
+      <td class="num">{{ '%+d' % m.delta }}</td>
+      <td>{{ m.note }}</td>
+      <td>{{ m.by_user or '—' }}</td>
+      {% if g.user.role == 'owner' %}
+      <td>
+        {% if m.voided_at %}取消済（{{ m.voided_user }}）
+        {% else %}
+        <form method="post" action="{{ url_for('inventory.void_move', move_id=m.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="link">取消</button>
+        </form>
+        {% endif %}
+      </td>
+      {% endif %}
+    </tr>
+  {% else %}
+    <tr><td colspan="6" class="empty">まだ記録がありません</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

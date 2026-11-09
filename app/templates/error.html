@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}エラー{% endblock %}
+{% block main %}
+<p class="flash error">{{ message }}</p>
+<p><a href="{{ url_for('inventory.index') }}">在庫にもどる</a></p>
+{% endblock %}

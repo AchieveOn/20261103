@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}ログイン{% endblock %}
+{% block main %}
+<form class="login" method="post">
+  <h1>喫茶在庫</h1>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>ID<input name="login_id" value="{{ login_id }}" autocomplete="username" required autofocus></label>
+  <label>パスワード<input name="password" type="password" autocomplete="current-password" required></label>
+  {% if error %}<p class="flash error" role="alert">{{ error }}</p>{% endif %}
+  <button class="primary">ログイン</button>
+</form>
+{% endblock %}

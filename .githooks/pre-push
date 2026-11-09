@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# push 前チェック: ①main/develop への直接 push 禁止（PR 経由のみ） ②ブランチ名 ③テスト
+# stdin: <local ref> <local sha> <remote ref> <remote sha>
+set -euo pipefail
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$HOOK_DIR/_gitflow.sh"
+
+ZERO_SHA="0000000000000000000000000000000000000000"
+run_tests=false
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [[ "$remote_ref" == refs/heads/* ]] || continue        # タグ等は対象外
+  [[ "$local_sha" == "$ZERO_SHA" ]] && continue          # ブランチ削除
+  branch="${remote_ref#refs/heads/}"
+
+  if is_protected_branch "$branch"; then
+    # 初回作成（リモートに無い）だけは許可。以降は PR でマージする
+    if [[ "$remote_sha" != "$ZERO_SHA" ]]; then
+      red "[gitflow] '$branch' への直接 push は禁止です。GitHub で Pull Request を作ってマージしてください。"
+      exit 1
+    fi
+    yellow "[gitflow] '$branch' をリモートに初回作成します"
+  elif ! is_valid_work_branch "$branch"; then
+    red "[gitflow] ブランチ名 '$branch' は GitFlow の規則外です。"
+    branch_name_help
+    exit 1
+  fi
+  run_tests=true
+done
+
+# ③ テスト（.venv があればそれを使う）
+if $run_tests && [[ "${SKIP_TESTS:-0}" != "1" ]]; then
+  py="python3"
+  [[ -x .venv/bin/python ]] && py=".venv/bin/python"
+  if ! "$py" -m pytest -q; then
+    red "[pre-push] テストが失敗しました。直してから push してください。"
+    exit 1
+  fi
+fi
+
+green "[pre-push] OK"

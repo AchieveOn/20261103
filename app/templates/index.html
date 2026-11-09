@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block main %}
+<h1>在庫</h1>
+{% if items %}
+<table class="stock">
+  <thead>
+    <tr><th>状態</th><th>品名</th><th>区分</th><th class="num">在庫</th><th class="num">発注点</th><th class="num">1日の使用</th><th class="num">残り日数</th></tr>
+  </thead>
+  <tbody>
+    {% for it in items %}
+    <tr class="lv-{{ it.level }}">
+      <td><span class="badge {{ it.level }}">{{ it.level_label }}</span></td>
+      <td><a href="{{ url_for('inventory.item_detail', item_id=it.id) }}">{{ it.name }}</a></td>
+      <td>{{ it.category }}</td>
+      <td class="num strong">{{ it.stock }}<small>{{ it.unit }}</small></td>
+      <td class="num">{{ it.threshold }}<small>{{ it.unit }}</small></td>
+      <td class="num">{{ it.per_day }}<small>{{ it.unit }}</small></td>
+      <td class="num">{{ it.days_left if it.days_left is not none else '—' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">品目がまだありません。{% if g.user.role == 'owner' %}<a href="{{ url_for('inventory.item_new') }}">品目を追加</a>{% endif %}</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,66 @@
+# CI（自動テスト）: lint → pytest（Postgres 17）→ Betterleaks で全履歴のキー検出
+name: CI
+
+on:
+  push:
+    branches:
+      [main, develop, "feature/**", "bugfix/**", "release/**", "hotfix/**"]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres # betterleaks:allow（CI 内だけの使い捨て DB）
+          POSTGRES_DB: cafe_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Neon の test ブランチで流したいときは Secrets に TEST_DATABASE_URL を登録（直結 URL・pooler 不可）
+      TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/cafe_test' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Lint
+        run: ruff check .
+      - name: Format（Python = ruff format、css・json・yaml・md = Prettier）
+        run: |
+          ruff format --check .
+          npx --yes prettier@3.9.5 --check .
+      - name: Test
+        run: pytest -q
+      - name: Mutation check（守りのテストが効いているか）
+        if: github.event_name == 'pull_request'
+        run: python tests/mutation_check.py
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Betterleaks
+        env:
+          VERSION: "1.9.0"
+        run: |
+          base="https://github.com/betterleaks/betterleaks/releases/download/v${VERSION}"
+          curl -sSfLO "$base/betterleaks_${VERSION}_linux_x64.tar.gz"
+          curl -sSfLO "$base/checksums.txt"
+          grep " betterleaks_${VERSION}_linux_x64.tar.gz\$" checksums.txt | sha256sum -c -
+          tar -xzf "betterleaks_${VERSION}_linux_x64.tar.gz" betterleaks
+          sudo mv betterleaks /usr/local/bin/
+      - name: Scan full git history
+        run: betterleaks git --redact --no-banner .

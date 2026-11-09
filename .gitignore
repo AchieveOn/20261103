@@ -1,0 +1,45 @@
+# ===== 秘密情報（絶対にコミットしない） =====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+backups/
+*.dump
+*.sql.gz
+*.enc
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+instance/
+
+# ===== OS / エディタ =====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# 個人情報チェックの禁止語（本名・店名など。各自の手元だけ）
+.githooks/denylist.local
+
+# ===== Claude Code（個人設定のみ除外。共有設定 settings.json はコミット） =====
+.claude/settings.local.json
+
+# ===== ログ =====
+*.log
+
+# ===== 納品物（スクリーンショット等。公開リポジトリには上げない） =====
+納品/
